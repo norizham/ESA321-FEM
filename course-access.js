@@ -5,10 +5,10 @@
 const ESA321_ACCESS = {
   bar: true,
   truss2d: true,
-  beam2d: true,
+  beam2d: false,
   frame2d: false,
-  cst: true,
-  truss3d: false,
+  cst: false,
+  truss3d: true,
   beam3d: false
 };
 
