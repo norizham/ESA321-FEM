@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3D Beam FEM Learning Module</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;background:#f4f6f9;color:#182235}header{background:#17365d;color:#fff;padding:20px 28px}
+main{max-width:1600px;margin:auto;padding:20px}.card{background:#fff;border:1px solid #d7dde6;border-radius:10px;padding:18px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{display:block;font-weight:bold;font-size:13px;margin-bottom:5px}
+input{width:100%;box-sizing:border-box;padding:8px;border:1px solid #b8c2d0;border-radius:6px}
+button{padding:10px 16px;border:0;border-radius:7px;background:#1f5fae;color:#fff;font-weight:bold;cursor:pointer;margin:4px}button.alt{background:#667085}
+table{border-collapse:collapse;max-width:100%}th,td{border:1px solid #ccd3dd;padding:6px 8px;text-align:center;white-space:nowrap}th{background:#eef2f7}
+.scroll{overflow:auto}.error{color:#b42318;font-weight:bold;margin-top:10px}.eq{text-align:center;font-family:"Times New Roman",serif;font-size:18px;margin:12px;line-height:1.65}
+.small{font-size:13px;color:#5d6878}.hidden{display:none}.matrix td{min-width:70px}.dof{font-weight:bold;background:#f8fafc}.nonzero{background:#fff2a8;font-weight:bold}
+.assemblyHit{background:#ffd966!important;font-weight:bold;box-shadow:inset 0 0 0 2px #c08a00}.selectedCard{outline:4px solid #ffd966}.elementSection{scroll-margin-top:16px}
+#beam3dCanvas{width:100%;height:500px;border:1px solid #ccd3dd;border-radius:8px;background:#fff}.teachbar{display:flex;flex-wrap:wrap;gap:6px}
+.mapbox{background:#eef4fb;border-left:5px solid #17365d;padding:12px;margin:10px 0}.note{background:#fff8e6;border-left:5px solid #d99a00;padding:11px;margin:10px 0}
+@media(max-width:850px){.grid{grid-template-columns:1fr 1fr}}@media(max-width:520px){.grid{grid-template-columns:1fr}}
+.view3dControls{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}.view3dControls button{padding:7px 11px}.view3dControls .small{margin-left:6px}canvas{touch-action:none;cursor:grab}canvas:active{cursor:grabbing}
+
+.fem-course-header{display:flex;align-items:center;gap:22px}.fem-course-logo{width:170px;height:96px;object-fit:contain;background:#fff;border-radius:8px;padding:5px;box-sizing:border-box}.fem-course-text{min-width:0}.fem-course-kicker{font-size:15px;font-weight:700;letter-spacing:.04em;color:#dce7f5;margin-bottom:4px}.fem-course-header h1{margin:0 0 5px}.fem-course-subtitle{color:#dce7f5}.fem-site-brand{font-weight:700;margin-right:10px;white-space:nowrap}@media(max-width:620px){.fem-course-header{align-items:flex-start;gap:12px}.fem-course-logo{width:115px;height:68px}.fem-course-kicker{font-size:12px}.fem-course-header h1{font-size:24px}}
+.fem-affiliation{font-size:14px;margin-top:5px;color:#dce7f5}.fem-author{font-size:14px;font-weight:700;margin-top:3px;color:#fff}
+/* Proper mathematical matrix notation */
+.matrix-eq{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:10px 0;font:21px "Times New Roman",serif}
+.math-matrix{position:relative;display:inline-block;padding:2px 10px;vertical-align:middle}
+.math-matrix:before,.math-matrix:after{content:"";position:absolute;top:0;bottom:0;width:7px;border-top:2px solid currentColor;border-bottom:2px solid currentColor}
+.math-matrix:before{left:0;border-left:2px solid currentColor}.math-matrix:after{right:0;border-right:2px solid currentColor}
+.math-matrix table{border-collapse:collapse;margin:0!important;width:auto!important;background:transparent!important;box-shadow:none!important}
+.math-matrix td{border:0!important;padding:2px 9px!important;text-align:center!important;min-width:auto!important;background:transparent!important;font:inherit!important}
+.math-frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05}.math-frac .num{border-bottom:1.6px solid currentColor;padding:0 5px 3px}.math-frac .den{padding:3px 5px 0}.display-eq{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0;font:21px "Times New Roman",serif}</style>
+<style id="immersive-ui">
+:root{--navy:#0b2342;--blue:#17365d;--accent:#2f75b5;--ink:#182235;--muted:#667085;--paper:#f4f7fb;--line:#d7e0eb;--gold:#f2b134}
+html{scroll-behavior:smooth}body{background:radial-gradient(circle at 15% 0,#edf5ff 0,transparent 30%),#f4f6f9}
+.fem-site-nav{backdrop-filter:blur(10px);background:rgba(11,35,66,.96)!important;border-bottom:1px solid rgba(255,255,255,.12)}
+.fem-site-nav a{transition:.2s ease}.fem-site-nav a:hover{transform:translateY(-1px)}
+.fem-quick-select{margin-left:auto;background:#fff;color:#17365d;border:0;border-radius:7px;padding:8px 10px;font-weight:700;max-width:180px}
+header{background:linear-gradient(125deg,#0b2342 0%,#17365d 58%,#2f75b5 100%)!important;position:relative;overflow:hidden}
+header:after{content:"";position:absolute;width:360px;height:360px;border:1px solid rgba(255,255,255,.12);border-radius:50%;right:-90px;top:-210px;box-shadow:0 0 0 45px rgba(255,255,255,.035),0 0 0 90px rgba(255,255,255,.025)}
+.fem-course-header{position:relative;z-index:1}.fem-course-logo{box-shadow:0 10px 28px rgba(0,0,0,.2)}
+.fem-course-kicker{color:#bcd9f7!important}.fem-affiliation{line-height:1.45}.fem-author{margin-top:7px!important}
+.card,.module-card{box-shadow:0 5px 18px rgba(15,39,71,.06)!important;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}.card:hover{border-color:#b9cce1}.module-card:hover{transform:translateY(-5px)!important;box-shadow:0 14px 30px rgba(15,39,71,.13)!important}
+.module-card span{display:inline-flex;align-items:center;gap:5px}.module-card span:after{content:"›";font-size:20px;line-height:1}.module-card span{font-size:0}.module-card span:before{content:"Open module";font-size:14px}
+.fem-pic{transition:transform .25s ease}.module-card:hover .fem-pic{transform:scale(1.02)}
+button{transition:transform .15s ease,box-shadow .15s ease}button:hover{transform:translateY(-1px);box-shadow:0 5px 12px rgba(31,95,174,.22)}
+.fem-context{max-width:1450px;margin:14px auto 0;padding:0 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#667085;font:600 13px Arial,sans-serif}.fem-context a{color:#1f5fae;text-decoration:none}.fem-context strong{color:#17365d}
+.fem-module-nav{max-width:1450px;margin:8px auto 34px;padding:0 20px;display:flex;justify-content:space-between;gap:12px}.fem-module-nav a{flex:1;max-width:320px;border:1px solid #cbd8e7;background:#fff;color:#17365d;text-decoration:none;border-radius:10px;padding:12px 15px;font:700 14px Arial,sans-serif;box-shadow:0 3px 10px rgba(15,39,71,.05)}.fem-module-nav a:last-child{text-align:right}.fem-module-nav a:hover{border-color:#6f9bc8;box-shadow:0 7px 18px rgba(15,39,71,.1)}
+.fem-top{position:fixed;right:20px;bottom:20px;width:42px;height:42px;border-radius:50%;background:#17365d;color:#fff;text-decoration:none;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.22);z-index:90;font:bold 20px Arial}
+.home-badges{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:18px auto 30px}.home-badge{background:#fff;border:1px solid #d7e0eb;border-radius:999px;padding:8px 13px;color:#17365d;font-weight:700;font-size:13px;box-shadow:0 3px 10px rgba(15,39,71,.05)}
+@media(max-width:800px){.fem-quick-select{width:100%;max-width:none;margin-left:0}.fem-context{align-items:flex-start;flex-direction:column}.fem-module-nav{flex-direction:column}.fem-module-nav a{max-width:none}.fem-module-nav a:last-child{text-align:left}}
+</style><script src="course-access.js"></script></head>
+<body>
+<style id="fem-site-nav-style">
+.fem-site-nav{background:#0f2747;color:#fff;padding:10px 18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:sticky;top:0;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,.16);font-family:Arial,sans-serif}
+.fem-site-brand{font-weight:700;margin-right:10px;white-space:nowrap}.fem-site-nav a{color:#fff;text-decoration:none;padding:8px 11px;border-radius:6px;font-size:14px;font-weight:600}.fem-site-nav a:hover{background:#285582}.fem-site-nav a.active{background:#fff;color:#17365d}.fem-bottom-home{display:block;width:max-content;margin:24px auto 36px;padding:10px 18px;background:#17365d;color:#fff!important;text-decoration:none;border-radius:7px;font:bold 14px Arial,sans-serif}
+@media(max-width:700px){.fem-site-nav{position:relative}.fem-site-brand{width:100%}.fem-site-nav a{font-size:13px;padding:7px 9px}}
+.view3dControls{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}.view3dControls button{padding:7px 11px}.view3dControls .small{margin-left:6px}canvas{touch-action:none;cursor:grab}canvas:active{cursor:grabbing}
+.fem-affiliation{font-size:14px;margin-top:5px;color:#dce7f5}.fem-author{font-size:14px;font-weight:700;margin-top:3px;color:#fff}</style><nav class="fem-site-nav"><span class="fem-site-brand">Interactive FEM Learning Suite</span><a href="index.html">Home</a><a href="bar.html">1D Bar</a><a href="truss2d.html">2D Truss</a><a href="beam2d.html">2D Beam</a><a href="frame2d.html">2D Frame</a><a href="cst.html">CST</a><a href="truss3d.html">3D Truss</a><a href="beam3d.html" class="active">3D Beam</a><select class="fem-quick-select" aria-label="Jump to FEM module" onchange="if(this.value) location.href=this.value"><option value="index.html">Home</option><option value="bar.html">1D Bar</option><option value="truss2d.html">2D Truss</option><option value="beam2d.html">2D Beam</option><option value="frame2d.html">2D Frame</option><option value="cst.html">CST</option><option value="truss3d.html">3D Truss</option><option value="beam3d.html" selected>3D Beam</option></select></nav>
+<header><div class="fem-course-header"><img src="aerospace-logo.jpg" class="fem-course-logo" alt="School of Aerospace Engineering"><div class="fem-course-text"><div class="fem-course-kicker">ESA 321 – FINITE ELEMENT METHOD</div><h1>3D Beam FEM Learning Module</h1><div class="fem-course-subtitle">Space beam/frame element • 6 DOFs per node • axial + torsion + biaxial bending • local/global stiffness • assembly</div><div class="fem-affiliation">School of Aerospace Engineering, Universiti Sains Malaysia, Tuanku Syed Sirajuddin Engineering Campus</div><div class="fem-author">Dr. Norizham Abdul Razak</div></div></div></header><div class="fem-context"><div><a href="index.html">ESA 321</a> &nbsp;›&nbsp; <strong>3D Beam FEM Learning Module</strong></div><div>Use the module selector above to jump between element types.</div></div>
+<main>
+<div class="card"><h2>1. 3D Beam Model</h2>
+<p class="small">This page uses the standard 2-node Euler–Bernoulli 3D beam/frame element. Each node has 6 DOFs: three translations and three rotations.</p>
+<div class="grid">
+<div><label>Young's modulus, E (Pa)</label><input id="E" type="number" step="any" value="200000000000"></div>
+<div><label>Poisson's ratio, ν</label><input id="nu" type="number" step="any" value="0.30"></div>
+
+<div><label>Torsion constant, J (m⁴)</label><input id="J" type="number" step="any" value="0.000016"></div>
+<div><label>Iᵧ (m⁴)</label><input id="Iy" type="number" step="any" value="0.000008"></div>
+<div><label>I𝓏 (m⁴)</label><input id="Iz" type="number" step="any" value="0.000012"></div>
+<div><label>Number of nodes</label><input id="nn" type="number" min="2" max="4" value="3"></div>
+<div><label>Number of elements</label><input id="ne" type="number" min="1" max="3" value="2"></div>
+</div>
+<div class="note"><b>DOFs at each node:</b> {u, v, w, θx, θy, θz}. The local x-axis runs from Node i → Node j. A reference vector is used to establish the local y-z orientation and avoid ambiguity about section rotation.</div>
+</div>
+
+<div class="card"><h2>2. Node Coordinates</h2>
+<div class="scroll"><table><thead><tr><th>Node</th><th>X (m)</th><th>Y (m)</th><th>Z (m)</th></tr></thead><tbody id="nodeRows"></tbody></table></div></div>
+
+<div class="card"><h2>3. Element Connectivity and Local-Axis Reference Vector</h2>
+<p class="small">The reference vector need only be non-parallel to the element. Default (0,0,1) is convenient for most members; the module automatically switches to global Y when necessary.</p>
+<div class="scroll"><table><thead><tr><th>Element</th><th>Node i</th><th>Node j</th><th>Area Aₑ (m²)</th><th>Ref X</th><th>Ref Y</th><th>Ref Z</th></tr></thead><tbody id="elemRows"></tbody></table></div>
+<br><button id="calc">Calculate & Draw</button><button id="example" class="alt">Load 3D Example</button><div id="err" class="error"></div></div>
+
+<div id="results" class="hidden">
+<div class="card"><h2>4. 3D Beam Structure</h2><canvas id="beam3dCanvas" width="1200" height="500"></canvas><div class="view3dControls"><button type="button" class="alt" id="viewIso">Isometric</button><button type="button" class="alt" id="viewFront">Front</button><button type="button" class="alt" id="viewTop">Top</button><button type="button" class="alt" id="viewSide">Side</button><button type="button" class="alt" id="viewReset">Reset View</button><span class="small">Drag to rotate • mouse wheel to zoom</span></div>
+<p class="small">Interactive 3D teaching view. Drag to rotate, use the mouse wheel to zoom, or select a standard view. The local axis triad for the selected element is shown near its midpoint.</p></div>
+
+<div class="card"><h2>5. 3D Beam Element Formulation</h2>
+<div class="eq">{d′}<sup>(e)</sup> = {uᵢ, vᵢ, wᵢ, θxᵢ, θyᵢ, θzᵢ, uⱼ, vⱼ, wⱼ, θxⱼ, θyⱼ, θzⱼ}<sup>T</sup></div>
+<div class="eq"><span class="display-eq"><span>G =</span><span class="math-frac"><span class="num">E</span><span class="den">2(1+ν)</span></span></span></div>
+<div class="eq">[k]<sup>(e)</sup> = [T]<sup>T</sup>[k′]<sup>(e)</sup>[T]</div>
+<p class="small">[k′] is the 12×12 local stiffness matrix containing axial EA/L, torsional GJ/L, bending about local y using EIᵧ, and bending about local z using EI𝓏.</p></div>
+
+<div class="card"><h2>6. Interactive Assembly Teaching Mode</h2>
+<p class="small">Select an element to highlight its member, 12 structural DOFs, and the corresponding rows/columns in the assembled global matrix.</p>
+<div id="teachButtons" class="teachbar"></div><div id="teachInfo" class="mapbox">Calculate the model, then select an element.</div></div>
+
+<div id="elementSections"></div>
+
+<div class="card"><h2>8. Assembled Global Stiffness Matrix [K]</h2>
+<p class="small">Global order per node: u, v, w, θx, θy, θz. Supports and loads are not applied.</p>
+<div id="global" class="scroll"></div></div>
+</div>
+</main>
+<script>
+(function(){"use strict";const $=id=>document.getElementById(id);
+function zz(x){return Math.abs(x)<1e-7?0:x}function fmt(x){x=zz(x);let a=Math.abs(x);return(a!==0&&(a>=1e6||a<1e-3))?x.toExponential(3):x.toFixed(4)}
+function dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]}function cross(a,b){return[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]}
+function norm(a){return Math.hypot(...a)}function unit(a){let n=norm(a);return a.map(v=>v/n)}
+function mm(A,B){return A.map(r=>B[0].map((_,j)=>r.reduce((s,v,k)=>s+v*B[k][j],0)))}function tr(A){return A[0].map((_,i)=>A.map(r=>r[i]))}
+function zeros(n,m=n){return Array.from({length:n},()=>Array(m).fill(0))}
+function matrix(M,labs,hit=[]){let H=new Set(hit),s="<table class='matrix'><thead><tr>";labs.forEach((x,i)=>s+=`<th class="dof ${H.has(i)?'assemblyHit':''}">${x}</th>`);s+="<th></th></tr></thead><tbody>";
+M.forEach((r,i)=>{s+="<tr>";r.forEach((v,j)=>s+=`<td class="${Math.abs(v)>1e-7?'nonzero ':''}${H.has(i)&&H.has(j)?'assemblyHit':''}">${fmt(v)}</td>`);s+=`<th class="dof ${H.has(i)?'assemblyHit':''}">${labs[i]||""}</th></tr>`});return s+"</tbody></table>"}
+function nodes(){let N=Math.max(2,Math.min(4,+$("nn").value||2)),old=[];$("nodeRows").querySelectorAll("tr").forEach(r=>{let q=r.querySelectorAll("input");old.push([q[0].value,q[1].value,q[2].value])});$("nodeRows").innerHTML="";
+let d=[[0,0,0],[4,0,0],[4,3,2],[1,4,3]];for(let i=0;i<N;i++){let q=old[i]||d[i];$("nodeRows").insertAdjacentHTML("beforeend",`<tr><td><b>${i+1}</b></td><td><input class="x" type="number" step="any" value="${q[0]}"></td><td><input class="y" type="number" step="any" value="${q[1]}"></td><td><input class="z" type="number" step="any" value="${q[2]}"></td></tr>`)}}
+function elems(){let N=Math.max(1,Math.min(3,+$("ne").value||1)),old=[];$("elemRows").querySelectorAll("tr").forEach(r=>{let q=r.querySelectorAll("input");old.push(Array.from(q).map(x=>x.value))});$("elemRows").innerHTML="";
+for(let e=0;e<N;e++){let q=old[e]||[e+1,e+2,0.005,0,0,1];$("elemRows").insertAdjacentHTML("beforeend",`<tr><td><b>${e+1}</b></td><td><input class="ni" type="number" value="${q[0]}"></td><td><input class="nj" type="number" value="${q[1]}"></td><td><input class="ae" type="number" step="any" value="${q[2]??0.005}"></td><td><input class="rx" type="number" step="any" value="${q[3]??0}"></td><td><input class="ry" type="number" step="any" value="${q[4]??0}"></td><td><input class="rz" type="number" step="any" value="${q[5]??1}"></td></tr>`)}}
+function localK(E,G,A,J,Iy,Iz,L){let k=zeros(12),ea=E*A/L,gj=G*J/L;
+k[0][0]=ea;k[0][6]=-ea;k[6][0]=-ea;k[6][6]=ea;k[3][3]=gj;k[3][9]=-gj;k[9][3]=-gj;k[9][9]=gj;
+let az=12*E*Iz/L**3,bz=6*E*Iz/L**2,cz=4*E*Iz/L,dz=2*E*Iz/L;
+let iz=[1,5,7,11],Mz=[[az,bz,-az,bz],[bz,cz,-bz,dz],[-az,-bz,az,-bz],[bz,dz,-bz,cz]];
+for(let r=0;r<4;r++)for(let c=0;c<4;c++)k[iz[r]][iz[c]]=Mz[r][c];
+let ay=12*E*Iy/L**3,by=6*E*Iy/L**2,cy=4*E*Iy/L,dy=2*E*Iy/L;
+let iy=[2,4,8,10],My=[[ay,-by,-ay,-by],[-by,cy,by,dy],[-ay,by,ay,by],[-by,dy,by,cy]];
+for(let r=0;r<4;r++)for(let c=0;c<4;c++)k[iy[r]][iy[c]]=My[r][c];return k}
+function axes(a,b,ref){let ex=unit([b.x-a.x,b.y-a.y,b.z-a.z]),r=ref;if(norm(r)<1e-10)r=[0,0,1];let proj=ex.map(v=>v*dot(r,ex)),yp=r.map((v,i)=>v-proj[i]);if(norm(yp)<1e-7){r=[0,1,0];proj=ex.map(v=>v*dot(r,ex));yp=r.map((v,i)=>v-proj[i]);if(norm(yp)<1e-7){r=[1,0,0];proj=ex.map(v=>v*dot(r,ex));yp=r.map((v,i)=>v-proj[i])}}let ey=unit(yp),ez=unit(cross(ex,ey));return{ex,ey,ez}}
+function transform(R){let T=zeros(12);for(let block=0;block<4;block++)for(let r=0;r<3;r++)for(let c=0;c<3;c++)T[3*block+r][3*block+c]=R[r][c];return T}
+let view3d={yaw:-0.65,pitch:0.45,zoom:1,sel:0};
+function rotate3(p){let cy=Math.cos(view3d.yaw),sy=Math.sin(view3d.yaw),cp=Math.cos(view3d.pitch),sp=Math.sin(view3d.pitch);let x=cy*p.x-sy*p.z,z=sy*p.x+cy*p.z,y=cp*p.y-sp*z;return{x,y,z:sp*p.y+cp*z}}
+function draw(ns,es,sel=view3d.sel){view3d.sel=sel||0;let cv=$("beam3dCanvas"),c=cv.getContext("2d"),W=cv.width,H=cv.height,pad=90;c.clearRect(0,0,W,H);if(!ns||!ns.length)return;let ctr={x:ns.reduce((a,n)=>a+n.x,0)/ns.length,y:ns.reduce((a,n)=>a+n.y,0)/ns.length,z:ns.reduce((a,n)=>a+n.z,0)/ns.length};let R=ns.map(n=>rotate3({x:n.x-ctr.x,y:n.y-ctr.y,z:n.z-ctr.z})),xs=R.map(p=>p.x),ys=R.map(p=>p.y),dx=Math.max(...xs)-Math.min(...xs)||1,dy=Math.max(...ys)-Math.min(...ys)||1,sc=Math.min((W-2*pad)/dx,(H-2*pad)/dy)*view3d.zoom,X=x=>W/2+x*sc,Y=y=>H/2-y*sc;
+let order=es.map(e=>({e,z:(R[e.i-1].z+R[e.j-1].z)/2})).sort((a,b)=>a.z-b.z);order.forEach(o=>{let e=o.e,a=R[e.i-1],b=R[e.j-1];c.strokeStyle=e.e===sel?"#f0a000":"#17365d";c.lineWidth=e.e===sel?11:7;c.lineCap="round";c.beginPath();c.moveTo(X(a.x),Y(a.y));c.lineTo(X(b.x),Y(b.y));c.stroke();c.fillStyle="#b42318";c.font="bold 16px Arial";c.textAlign="center";c.fillText("E"+e.e,(X(a.x)+X(b.x))/2,(Y(a.y)+Y(b.y))/2-14)});
+ns.forEach((n,i)=>{let q=R[i],x=X(q.x),y=Y(q.y);c.fillStyle="#fff";c.strokeStyle="#17365d";c.lineWidth=3;c.beginPath();c.arc(x,y,17,0,2*Math.PI);c.fill();c.stroke();c.fillStyle="#17365d";c.font="bold 15px Arial";c.textAlign="center";c.fillText(i+1,x,y+5);c.fillStyle="#5d6878";c.font="12px Arial";c.fillText(`(${fmt(n.x)}, ${fmt(n.y)}, ${fmt(n.z)})`,x,y+37)});
+let e=es.find(q=>q.e===sel);if(e){let a=ns[e.i-1],b=ns[e.j-1],mid={x:(a.x+b.x)/2-ctr.x,y:(a.y+b.y)/2-ctr.y,z:(a.z+b.z)/2-ctr.z},rm=rotate3(mid),mx=X(rm.x),my=Y(rm.y),S=48;function av(v,label){let q=rotate3({x:v[0],y:v[1],z:v[2]}),n=Math.hypot(q.x,q.y)||1,ex=mx+S*q.x/n,ey=my-S*q.y/n;c.beginPath();c.moveTo(mx,my);c.lineTo(ex,ey);c.stroke();c.fillText(label,ex+7,ey+3)}c.lineWidth=2;c.strokeStyle="#555";c.fillStyle="#333";c.font="bold 13px Arial";av(e.ex,"x′");av(e.ey,"y′");av(e.ez,"z′")}
+let O={x:72,y:H-65},L=55;function axis(v,label){let q=rotate3({x:v[0],y:v[1],z:v[2]}),n=Math.hypot(q.x,q.y)||1,ex=O.x+L*q.x/n,ey=O.y-L*q.y/n;c.strokeStyle="#5d6878";c.fillStyle="#5d6878";c.lineWidth=2;c.beginPath();c.moveTo(O.x,O.y);c.lineTo(ex,ey);c.stroke();c.font="bold 13px Arial";c.fillText(label,ex+7,ey+4)}axis([1,0,0],"X");axis([0,1,0],"Y");axis([0,0,1],"Z")}
+function selectEl(no){let T=window.B3,z=T.es.find(e=>e.e===no),mp=[];[z.i,z.j].forEach(n=>{let b=6*(n-1);for(let d=0;d<6;d++)mp.push(b+d)});let one=mp.map(x=>x+1);
+$("teachInfo").innerHTML=`<b>Element ${z.e}: Node ${z.i} → Node ${z.j}</b><br>Element DOFs: {u${z.i}, v${z.i}, w${z.i}, θx${z.i}, θy${z.i}, θz${z.i}, u${z.j}, v${z.j}, w${z.j}, θx${z.j}, θy${z.j}, θz${z.j}}<br>Global DOF numbers: {${one.join(", ")}}<br><br>The 12×12 global element stiffness matrix is assembled into these rows and columns.`;
+$("global").innerHTML=matrix(T.K,T.labs,mp);document.querySelectorAll(".elementSection").forEach(x=>x.classList.remove("selectedCard"));let q=$("sec7-"+no);if(q)q.classList.add("selectedCard");draw(T.ns,T.es,no)}
+function calc(){try{$("err").textContent="";let E=+$("E").value,nu=+$("nu").value,J=+$("J").value,Iy=+$("Iy").value,Iz=+$("Iz").value,nn=+$("nn").value,ne=+$("ne").value;
+if(!(E>0&&J>0&&Iy>0&&Iz>0)||nu<=-1||nu>=.5)throw Error("Check material/section properties. Use E > 0, J > 0, Iᵧ > 0, I𝓏 > 0 and −1 < ν < 0.5.");let G=E/(2*(1+nu)),ns=[];
+$("nodeRows").querySelectorAll("tr").forEach((r,i)=>{if(i<nn){let x=+r.querySelector(".x").value,y=+r.querySelector(".y").value,z=+r.querySelector(".z").value;if(![x,y,z].every(Number.isFinite))throw Error(`Invalid coordinates at node ${i+1}.`);ns.push({x,y,z})}});
+let es=[];$("elemRows").querySelectorAll("tr").forEach((r,e)=>{if(e<ne){let i=+r.querySelector(".ni").value,j=+r.querySelector(".nj").value;if(i<1||j<1||i>nn||j>nn||i===j)throw Error(`Invalid connectivity for element ${e+1}.`);let a=ns[i-1],b=ns[j-1],L=Math.hypot(b.x-a.x,b.y-a.y,b.z-a.z);if(!(L>0))throw Error(`Element ${e+1} has zero length.`);let A=+r.querySelector(".ae").value;if(!(A>0))throw Error(`Element ${e+1}: area must be positive.`);let ref=[+r.querySelector(".rx").value,+r.querySelector(".ry").value,+r.querySelector(".rz").value],ax=axes(a,b,ref),R=[ax.ex,ax.ey,ax.ez],T=transform(R),kp=localK(E,G,A,J,Iy,Iz,L),kg=mm(mm(tr(T),kp),T);es.push({e:e+1,i,j,L,A,ref,...ax,R,T,kp,kg})}});
+draw(ns,es);let box=$("elementSections");box.innerHTML="";
+es.forEach(z=>{let gl=[];[z.i,z.j].forEach(n=>gl.push(`u${n}`,`v${n}`,`w${n}`,`θx${n}`,`θy${n}`,`θz${n}`));let local=["u′i","v′i","w′i","θx′i","θy′i","θz′i","u′j","v′j","w′j","θx′j","θy′j","θz′j"];
+let d=document.createElement("div");d.className="card elementSection";d.id="sec7-"+z.e;d.innerHTML=`<h2>7.${z.e} Element ${z.e}: Node ${z.i} → Node ${z.j}</h2>
+<div class="eq">L = ${fmt(z.L)} m</div>
+<p><b>Local unit vectors expressed in global coordinates</b></p>
+<div class="scroll"><table><thead><tr><th>Axis</th><th>X</th><th>Y</th><th>Z</th></tr></thead><tbody>
+<tr><td>x′</td><td>${fmt(z.ex[0])}</td><td>${fmt(z.ex[1])}</td><td>${fmt(z.ex[2])}</td></tr>
+<tr><td>y′</td><td>${fmt(z.ey[0])}</td><td>${fmt(z.ey[1])}</td><td>${fmt(z.ey[2])}</td></tr>
+<tr><td>z′</td><td>${fmt(z.ez[0])}</td><td>${fmt(z.ez[1])}</td><td>${fmt(z.ez[2])}</td></tr></tbody></table></div>
+<p><b>12×12 local stiffness matrix [k′]<sup>(${z.e})</sup></b></p><div class="scroll">${matrix(z.kp,local)}</div>
+<p><b>12×12 transformation matrix [T]</b></p><div class="scroll">${matrix(z.T,gl)}</div>
+<p><b>Global element stiffness [k]<sup>(${z.e})</sup> = [T]ᵀ[k′][T]</b></p><div class="scroll">${matrix(z.kg,gl)}</div>
+<p class="small">Global DOF mapping: {${[z.i,z.j].flatMap(n=>Array.from({length:6},(_,d)=>6*(n-1)+d+1)).join(", ")}}</p>`;box.appendChild(d)});
+let nd=6*nn,K=zeros(nd);es.forEach(z=>{let mp=[];[z.i,z.j].forEach(n=>{for(let d=0;d<6;d++)mp.push(6*(n-1)+d)});for(let r=0;r<12;r++)for(let c=0;c<12;c++)K[mp[r]][mp[c]]+=z.kg[r][c]});
+let labs=[];for(let n=1;n<=nn;n++)labs.push(`u${n}`,`v${n}`,`w${n}`,`θx${n}`,`θy${n}`,`θz${n}`);$("global").innerHTML=matrix(K,labs);window.B3={ns,es,K,labs};
+$("teachButtons").innerHTML="";es.forEach(z=>{let b=document.createElement("button");b.type="button";b.textContent=`Element ${z.e} → 7.${z.e}`;b.addEventListener("click",()=>{selectEl(z.e);let t=$("sec7-"+z.e);if(t){location.hash="sec7-"+z.e;t.scrollIntoView()}});$("teachButtons").appendChild(b)});
+$("results").classList.remove("hidden");$("results").scrollIntoView()}catch(e){$("err").textContent=e.message||String(e);$("results").classList.add("hidden")}}
+function example(){$("E").value=200e9;$("nu").value=.3;$("J").value=1.6e-5;$("Iy").value=8e-6;$("Iz").value=1.2e-5;$("nn").value=3;$("ne").value=2;nodes();elems();let p=[[0,0,0],[4,0,0],[4,3,2]];$("nodeRows").querySelectorAll("tr").forEach((r,i)=>{r.querySelector(".x").value=p[i][0];r.querySelector(".y").value=p[i][1];r.querySelector(".z").value=p[i][2]});let e=[[1,2],[2,3]];$("elemRows").querySelectorAll("tr").forEach((r,i)=>{r.querySelector(".ni").value=e[i][0];r.querySelector(".nj").value=e[i][1];r.querySelector(".ae").value=[0.005,0.007][i];r.querySelector(".rx").value=0;r.querySelector(".ry").value=0;r.querySelector(".rz").value=1});calc()}
+function redraw3d(){let T=window.TR3||window.B3;if(T)draw(T.ns,T.es,view3d.sel)}
+function setView(yaw,pitch,zoom=1){view3d.yaw=yaw;view3d.pitch=pitch;view3d.zoom=zoom;redraw3d()}
+$("viewIso").addEventListener("click",()=>setView(-0.65,0.45));$("viewFront").addEventListener("click",()=>setView(0,0));$("viewTop").addEventListener("click",()=>setView(0,Math.PI/2));$("viewSide").addEventListener("click",()=>setView(-Math.PI/2,0));$("viewReset").addEventListener("click",()=>setView(-0.65,0.45,1));
+(()=>{let cv=$("beam3dCanvas"),drag=false,lx=0,ly=0;cv.addEventListener("pointerdown",e=>{drag=true;lx=e.clientX;ly=e.clientY;cv.setPointerCapture(e.pointerId)});cv.addEventListener("pointermove",e=>{if(!drag)return;view3d.yaw+=(e.clientX-lx)*0.008;view3d.pitch=Math.max(-1.5,Math.min(1.5,view3d.pitch+(e.clientY-ly)*0.008));lx=e.clientX;ly=e.clientY;redraw3d()});cv.addEventListener("pointerup",()=>drag=false);cv.addEventListener("pointercancel",()=>drag=false);cv.addEventListener("wheel",e=>{e.preventDefault();view3d.zoom=Math.max(.55,Math.min(2.5,view3d.zoom*(e.deltaY>0?.9:1.1)));redraw3d()},{passive:false})})();
+$("nn").addEventListener("change",nodes);$("ne").addEventListener("change",elems);$("calc").addEventListener("click",calc);$("example").addEventListener("click",example);nodes();elems()})();
+</script><a class="fem-bottom-home" href="index.html">⌂ FEM Home</a>
+<div class="fem-module-nav"><a href="truss3d.html">← 3D Truss</a><a href="index.html">Home →</a></div><a class="fem-top" href="#" aria-label="Back to top">↑</a></body></html>

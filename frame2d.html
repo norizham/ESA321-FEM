@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2D Frame FEM Learning Module</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;background:#f4f6f9;color:#182235}header{background:#17365d;color:#fff;padding:20px 28px}
+main{max-width:1500px;margin:auto;padding:20px}.card{background:#fff;border:1px solid #d7dde6;border-radius:10px;padding:18px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{display:block;font-weight:bold;font-size:13px;margin-bottom:5px}
+input{width:100%;box-sizing:border-box;padding:8px;border:1px solid #b8c2d0;border-radius:6px}button{padding:10px 16px;border:0;border-radius:7px;background:#1f5fae;color:#fff;font-weight:bold;cursor:pointer;margin:4px}
+button.alt{background:#667085}table{border-collapse:collapse;max-width:100%}th,td{border:1px solid #ccd3dd;padding:6px 8px;text-align:center;white-space:nowrap}th{background:#eef2f7}
+.scroll{overflow:auto}.error{color:#b42318;font-weight:bold;margin-top:10px}.eq{text-align:center;font-family:"Times New Roman",serif;font-size:18px;margin:12px}
+.small{font-size:13px;color:#5d6878}.hidden{display:none}.matrix td{min-width:76px}.dof{font-weight:bold;background:#f8fafc}.nonzero{background:#fff2a8;font-weight:bold}
+.assemblyHit{background:#ffd966!important;font-weight:bold;box-shadow:inset 0 0 0 2px #c08a00}.selectedCard{outline:4px solid #ffd966}.elementSection{scroll-margin-top:16px}
+#frameCanvas{width:100%;height:420px;border:1px solid #ccd3dd;border-radius:8px;background:#fff}.teachbar{display:flex;flex-wrap:wrap;gap:6px}
+.mapbox{background:#eef4fb;border-left:5px solid #17365d;padding:12px;margin:10px 0}.formula{line-height:1.8}
+@media(max-width:800px){.grid{grid-template-columns:1fr 1fr}}@media(max-width:520px){.grid{grid-template-columns:1fr}}
+
+.fem-course-header{display:flex;align-items:center;gap:22px}.fem-course-logo{width:170px;height:96px;object-fit:contain;background:#fff;border-radius:8px;padding:5px;box-sizing:border-box}.fem-course-text{min-width:0}.fem-course-kicker{font-size:15px;font-weight:700;letter-spacing:.04em;color:#dce7f5;margin-bottom:4px}.fem-course-header h1{margin:0 0 5px}.fem-course-subtitle{color:#dce7f5}.fem-site-brand{font-weight:700;margin-right:10px;white-space:nowrap}@media(max-width:620px){.fem-course-header{align-items:flex-start;gap:12px}.fem-course-logo{width:115px;height:68px}.fem-course-kicker{font-size:12px}.fem-course-header h1{font-size:24px}}
+.fem-affiliation{font-size:14px;margin-top:5px;color:#dce7f5}.fem-author{font-size:14px;font-weight:700;margin-top:3px;color:#fff}
+/* Proper mathematical matrix notation */
+.matrix-eq{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:10px 0;font:21px "Times New Roman",serif}
+.math-matrix{position:relative;display:inline-block;padding:2px 10px;vertical-align:middle}
+.math-matrix:before,.math-matrix:after{content:"";position:absolute;top:0;bottom:0;width:7px;border-top:2px solid currentColor;border-bottom:2px solid currentColor}
+.math-matrix:before{left:0;border-left:2px solid currentColor}.math-matrix:after{right:0;border-right:2px solid currentColor}
+.math-matrix table{border-collapse:collapse;margin:0!important;width:auto!important;background:transparent!important;box-shadow:none!important}
+.math-matrix td{border:0!important;padding:2px 9px!important;text-align:center!important;min-width:auto!important;background:transparent!important;font:inherit!important}
+.math-frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05}.math-frac .num{border-bottom:1.6px solid currentColor;padding:0 5px 3px}.math-frac .den{padding:3px 5px 0}.display-eq{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0;font:21px "Times New Roman",serif}</style>
+<style id="immersive-ui">
+:root{--navy:#0b2342;--blue:#17365d;--accent:#2f75b5;--ink:#182235;--muted:#667085;--paper:#f4f7fb;--line:#d7e0eb;--gold:#f2b134}
+html{scroll-behavior:smooth}body{background:radial-gradient(circle at 15% 0,#edf5ff 0,transparent 30%),#f4f6f9}
+.fem-site-nav{backdrop-filter:blur(10px);background:rgba(11,35,66,.96)!important;border-bottom:1px solid rgba(255,255,255,.12)}
+.fem-site-nav a{transition:.2s ease}.fem-site-nav a:hover{transform:translateY(-1px)}
+.fem-quick-select{margin-left:auto;background:#fff;color:#17365d;border:0;border-radius:7px;padding:8px 10px;font-weight:700;max-width:180px}
+header{background:linear-gradient(125deg,#0b2342 0%,#17365d 58%,#2f75b5 100%)!important;position:relative;overflow:hidden}
+header:after{content:"";position:absolute;width:360px;height:360px;border:1px solid rgba(255,255,255,.12);border-radius:50%;right:-90px;top:-210px;box-shadow:0 0 0 45px rgba(255,255,255,.035),0 0 0 90px rgba(255,255,255,.025)}
+.fem-course-header{position:relative;z-index:1}.fem-course-logo{box-shadow:0 10px 28px rgba(0,0,0,.2)}
+.fem-course-kicker{color:#bcd9f7!important}.fem-affiliation{line-height:1.45}.fem-author{margin-top:7px!important}
+.card,.module-card{box-shadow:0 5px 18px rgba(15,39,71,.06)!important;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}.card:hover{border-color:#b9cce1}.module-card:hover{transform:translateY(-5px)!important;box-shadow:0 14px 30px rgba(15,39,71,.13)!important}
+.module-card span{display:inline-flex;align-items:center;gap:5px}.module-card span:after{content:"›";font-size:20px;line-height:1}.module-card span{font-size:0}.module-card span:before{content:"Open module";font-size:14px}
+.fem-pic{transition:transform .25s ease}.module-card:hover .fem-pic{transform:scale(1.02)}
+button{transition:transform .15s ease,box-shadow .15s ease}button:hover{transform:translateY(-1px);box-shadow:0 5px 12px rgba(31,95,174,.22)}
+.fem-context{max-width:1450px;margin:14px auto 0;padding:0 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#667085;font:600 13px Arial,sans-serif}.fem-context a{color:#1f5fae;text-decoration:none}.fem-context strong{color:#17365d}
+.fem-module-nav{max-width:1450px;margin:8px auto 34px;padding:0 20px;display:flex;justify-content:space-between;gap:12px}.fem-module-nav a{flex:1;max-width:320px;border:1px solid #cbd8e7;background:#fff;color:#17365d;text-decoration:none;border-radius:10px;padding:12px 15px;font:700 14px Arial,sans-serif;box-shadow:0 3px 10px rgba(15,39,71,.05)}.fem-module-nav a:last-child{text-align:right}.fem-module-nav a:hover{border-color:#6f9bc8;box-shadow:0 7px 18px rgba(15,39,71,.1)}
+.fem-top{position:fixed;right:20px;bottom:20px;width:42px;height:42px;border-radius:50%;background:#17365d;color:#fff;text-decoration:none;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.22);z-index:90;font:bold 20px Arial}
+.home-badges{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:18px auto 30px}.home-badge{background:#fff;border:1px solid #d7e0eb;border-radius:999px;padding:8px 13px;color:#17365d;font-weight:700;font-size:13px;box-shadow:0 3px 10px rgba(15,39,71,.05)}
+@media(max-width:800px){.fem-quick-select{width:100%;max-width:none;margin-left:0}.fem-context{align-items:flex-start;flex-direction:column}.fem-module-nav{flex-direction:column}.fem-module-nav a{max-width:none}.fem-module-nav a:last-child{text-align:left}}
+</style><script src="course-access.js"></script></head>
+<body>
+<style id="fem-site-nav-style">
+.fem-site-nav{background:#0f2747;color:#fff;padding:10px 18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:sticky;top:0;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,.16);font-family:Arial,sans-serif}
+.fem-site-brand{font-weight:700;margin-right:10px;white-space:nowrap}.fem-site-nav a{color:#fff;text-decoration:none;padding:8px 11px;border-radius:6px;font-size:14px;font-weight:600}.fem-site-nav a:hover{background:#285582}.fem-site-nav a.active{background:#fff;color:#17365d}.fem-bottom-home{display:block;width:max-content;margin:24px auto 36px;padding:10px 18px;background:#17365d;color:#fff!important;text-decoration:none;border-radius:7px;font:bold 14px Arial,sans-serif}
+@media(max-width:700px){.fem-site-nav{position:relative}.fem-site-brand{width:100%}.fem-site-nav a{font-size:13px;padding:7px 9px}}
+.fem-affiliation{font-size:14px;margin-top:5px;color:#dce7f5}.fem-author{font-size:14px;font-weight:700;margin-top:3px;color:#fff}</style><nav class="fem-site-nav"><span class="fem-site-brand">Interactive FEM Learning Suite</span><a href="index.html">Home</a><a href="bar.html">1D Bar</a><a href="truss2d.html">2D Truss</a><a href="beam2d.html">2D Beam</a><a href="frame2d.html" class="active">2D Frame</a><a href="cst.html">CST</a><a href="truss3d.html">3D Truss</a><a href="beam3d.html">3D Beam</a><select class="fem-quick-select" aria-label="Jump to FEM module" onchange="if(this.value) location.href=this.value"><option value="index.html">Home</option><option value="bar.html">1D Bar</option><option value="truss2d.html">2D Truss</option><option value="beam2d.html">2D Beam</option><option value="frame2d.html" selected>2D Frame</option><option value="cst.html">CST</option><option value="truss3d.html">3D Truss</option><option value="beam3d.html">3D Beam</option></select></nav><header><div class="fem-course-header"><img src="aerospace-logo.jpg" class="fem-course-logo" alt="School of Aerospace Engineering"><div class="fem-course-text"><div class="fem-course-kicker">ESA 321 – FINITE ELEMENT METHOD</div><h1>2D Frame FEM Learning Module</h1><div class="fem-course-subtitle">Plane frame • axial + bending • 3 DOFs per node • local/global stiffness • transformation • assembly</div><div class="fem-affiliation">School of Aerospace Engineering, Universiti Sains Malaysia, Tuanku Syed Sirajuddin Engineering Campus</div><div class="fem-author">Dr. Norizham Abdul Razak</div></div></div></header><div class="fem-context"><div><a href="index.html">ESA 321</a> &nbsp;›&nbsp; <strong>2D Frame FEM Learning Module</strong></div><div>Use the module selector above to jump between element types.</div></div>
+<main>
+<div class="card"><h2>1. Frame Model</h2>
+<p class="small">Standard 2-node Euler–Bernoulli plane-frame element. Each node has three DOFs: horizontal displacement u, vertical displacement v, and rotation θ.</p>
+<div class="grid"><div><label>Young's modulus, E (N/m²)</label><input id="E" type="number" step="any" value="200000000000"></div>
+
+<div><label>Second moment, I (m⁴)</label><input id="I" type="number" step="any" value="0.000008333"></div>
+<div><label>Number of nodes</label><input id="nn" type="number" min="2" max="5" value="3"></div>
+<div><label>Number of elements</label><input id="ne" type="number" min="1" max="4" value="2"></div></div></div>
+
+<div class="card"><h2>2. Node Coordinates</h2>
+<div class="scroll"><table><thead><tr><th>Node</th><th>x (m)</th><th>y (m)</th></tr></thead><tbody id="nodeRows"></tbody></table></div></div>
+
+<div class="card"><h2>3. Element Connectivity</h2><p class="small"><b>Element-specific section property:</b> enter a separate cross-sectional area Aₑ for each element.</p>
+<div class="scroll"><table><thead><tr><th>Element</th><th>Node i</th><th>Node j</th><th>Area Aₑ (m²)</th></tr></thead><tbody id="elemRows"></tbody></table></div>
+<br><button id="calc">Calculate & Draw</button><button id="example" class="alt">Load Example</button><div id="err" class="error"></div></div>
+
+<div id="results" class="hidden">
+<div class="card"><h2>4. Frame Structure</h2><canvas id="frameCanvas" width="1200" height="420"></canvas>
+<p class="small">θ is measured counter-clockwise from global +X in the Node i → Node j direction.</p></div>
+
+<div class="card"><h2>5. Frame Element Formulation</h2>
+<p>Local element DOF order:</p><div class="eq">{d′}<sup>(e)</sup> = {u′ᵢ, v′ᵢ, θᵢ, u′ⱼ, v′ⱼ, θⱼ}<sup>T</sup></div>
+<div class="formula"><b>Local stiffness matrix:</b> combines axial stiffness AE/L and bending stiffness EI/L³.</div>
+<div class="eq">[k]<sup>(e)</sup> = [T]<sup>T</sup>[k′]<sup>(e)</sup>[T]</div>
+<p class="small">Global element DOF order: {uᵢ, vᵢ, θᵢ, uⱼ, vⱼ, θⱼ}. Direction cosines: l = cos θ, m = sin θ.</p></div>
+
+<div class="card"><h2>6. Interactive Assembly Teaching Mode</h2>
+<p class="small">Select an element to highlight the member, its six global DOFs, and its locations in the assembled global stiffness matrix.</p>
+<div id="teachButtons" class="teachbar"></div><div id="teachInfo" class="mapbox">Calculate the frame, then select an element.</div></div>
+
+<div id="elementSections"></div>
+
+<div class="card"><h2>8. Assembled Global Stiffness Matrix [K]</h2>
+<p class="small">Global DOF order: u₁, v₁, θ₁, u₂, v₂, θ₂, ... . Boundary conditions are not applied.</p>
+<div id="global" class="scroll"></div></div>
+</div></main>
+<script>
+(function(){"use strict";const $=id=>document.getElementById(id);
+function z(x){return Math.abs(x)<1e-8?0:x} function fmt(x){x=z(x);let a=Math.abs(x);return(a!==0&&(a>=1e6||a<1e-3))?x.toExponential(4):x.toFixed(4)}
+function nodeRows(){let n=Math.max(2,Math.min(5,+$("nn").value||2)),old=[];$("nodeRows").querySelectorAll("tr").forEach(r=>{let q=r.querySelectorAll("input");old.push([q[0].value,q[1].value,q[2]?.value||0.005])});$("nodeRows").innerHTML="";
+for(let i=0;i<n;i++){let q=old[i]||[i*3,0];$("nodeRows").insertAdjacentHTML("beforeend",`<tr><td><b>${i+1}</b></td><td><input class="x" type="number" step="any" value="${q[0]}"></td><td><input class="y" type="number" step="any" value="${q[1]}"></td></tr>`)}}
+function elemRows(){let n=Math.max(1,Math.min(4,+$("ne").value||1)),old=[];$("elemRows").querySelectorAll("tr").forEach(r=>{let q=r.querySelectorAll("input");old.push([q[0].value,q[1].value])});$("elemRows").innerHTML="";
+for(let e=0;e<n;e++){let q=old[e]||[e+1,e+2,0.005];$("elemRows").insertAdjacentHTML("beforeend",`<tr><td><b>${e+1}</b></td><td><input class="ni" type="number" value="${q[0]}"></td><td><input class="nj" type="number" value="${q[1]}"></td><td><input class="ae" type="number" step="any" value="${q[2]}"></td></tr>`) }}
+function mm(A,B){return A.map(r=>B[0].map((_,j)=>r.reduce((s,v,k)=>s+v*B[k][j],0)))}function tr(A){return A[0].map((_,i)=>A.map(r=>r[i]))}
+function mat(M,labs,hit=[]){let H=new Set(hit),s="<table class='matrix'><thead><tr>";labs.forEach((x,i)=>s+=`<th class="dof ${H.has(i)?'assemblyHit':''}">${x}</th>`);s+="<th></th></tr></thead><tbody>";
+M.forEach((r,i)=>{s+="<tr>";r.forEach((v,j)=>s+=`<td class="${Math.abs(v)>1e-8?'nonzero ':''}${H.has(i)&&H.has(j)?'assemblyHit':''}">${fmt(v)}</td>`);s+=`<th class="dof ${H.has(i)?'assemblyHit':''}">${labs[i]}</th></tr>`});return s+"</tbody></table>"}
+function draw(ns,es,sel=0){let cv=$("frameCanvas"),c=cv.getContext("2d"),W=cv.width,H=cv.height,p=80;c.clearRect(0,0,W,H);let xs=ns.map(n=>n.x),ys=ns.map(n=>n.y),xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...ys),ymax=Math.max(...ys),dx=xmax-xmin||1,dy=ymax-ymin||1,sc=Math.min((W-2*p)/dx,(H-2*p)/dy),X=x=>p+(x-xmin)*sc,Y=y=>H-p-(y-ymin)*sc;
+es.forEach(e=>{let a=ns[e.i-1],b=ns[e.j-1];c.strokeStyle=e.e===sel?"#f0a000":"#17365d";c.lineWidth=e.e===sel?11:7;c.lineCap="round";c.beginPath();c.moveTo(X(a.x),Y(a.y));c.lineTo(X(b.x),Y(b.y));c.stroke();let mx=(X(a.x)+X(b.x))/2,my=(Y(a.y)+Y(b.y))/2;c.fillStyle="#b42318";c.font="bold 16px Arial";c.textAlign="center";c.fillText(`E${e.e}  θ=${fmt(e.ang)}°`,mx,my-15)});
+ns.forEach((n,i)=>{let x=X(n.x),y=Y(n.y);c.fillStyle="white";c.strokeStyle="#17365d";c.lineWidth=3;c.beginPath();c.arc(x,y,17,0,2*Math.PI);c.fill();c.stroke();c.fillStyle="#17365d";c.font="bold 15px Arial";c.fillText(i+1,x,y+5);c.fillStyle="#5d6878";c.font="12px Arial";c.fillText(`(${fmt(n.x)}, ${fmt(n.y)})`,x,y+38)})}
+function local(E,A,I,L){let a=E*A/L,b=12*E*I/L**3,c=6*E*I/L**2,d=4*E*I/L,f=2*E*I/L;
+return [[a,0,0,-a,0,0],[0,b,c,0,-b,c],[0,c,d,0,-c,f],[-a,0,0,a,0,0],[0,-b,-c,0,b,-c],[0,c,f,0,-c,d]]}
+function trans(l,m){return [[l,m,0,0,0,0],[-m,l,0,0,0,0],[0,0,1,0,0,0],[0,0,0,l,m,0],[0,0,0,-m,l,0],[0,0,0,0,0,1]]}
+function selectEl(no){let T=window.FR,z=T.es.find(e=>e.e===no),mp=[3*(z.i-1),3*(z.i-1)+1,3*(z.i-1)+2,3*(z.j-1),3*(z.j-1)+1,3*(z.j-1)+2],one=mp.map(x=>x+1);
+$("teachInfo").innerHTML=`<b>Element ${z.e}: Node ${z.i} → Node ${z.j}</b><br>Global element DOFs: {u${z.i}, v${z.i}, θ${z.i}, u${z.j}, v${z.j}, θ${z.j}}<br>Global DOF numbers: {${one.join(", ")}}<br><br>The 6×6 transformed element stiffness matrix is assembled into global rows and columns <b>${one.join(", ")}</b>.`;
+$("global").innerHTML=mat(T.K,T.labs,mp);document.querySelectorAll(".elementSection").forEach(x=>x.classList.remove("selectedCard"));let q=$("sec7-"+no);if(q)q.classList.add("selectedCard");draw(T.ns,T.es,no)}
+function calc(){try{$("err").textContent="";let E=+$("E").value,I=+$("I").value,nn=+$("nn").value,ne=+$("ne").value;if(!(E>0&&I>0)||nn<2||nn>5||ne<1||ne>4)throw Error("Check E, A, I, node count and element count.");
+let ns=[];$("nodeRows").querySelectorAll("tr").forEach((r,i)=>{if(i<nn){let x=+r.querySelector(".x").value,y=+r.querySelector(".y").value;if(!Number.isFinite(x)||!Number.isFinite(y))throw Error(`Invalid coordinates at node ${i+1}.`);ns.push({x,y})}});
+let es=[];$("elemRows").querySelectorAll("tr").forEach((r,e)=>{if(e<ne){let i=+r.querySelector(".ni").value,j=+r.querySelector(".nj").value;if(i<1||j<1||i>nn||j>nn||i===j)throw Error(`Invalid connectivity for element ${e+1}.`);let dx=ns[j-1].x-ns[i-1].x,dy=ns[j-1].y-ns[i-1].y,L=Math.hypot(dx,dy);if(!(L>0))throw Error(`Element ${e+1} has zero length.`);let A=+r.querySelector(".ae").value;if(!(A>0))throw Error(`Element ${e+1}: area must be positive.`);let l=dx/L,m=dy/L,ang=Math.atan2(dy,dx)*180/Math.PI,kp=local(E,A,I,L),T=trans(l,m),kg=mm(mm(tr(T),kp),T);es.push({e:e+1,i,j,L,A,l,m,ang,kp,T,kg})}});
+draw(ns,es);let box=$("elementSections");box.innerHTML="";
+es.forEach(q=>{let gl=[`u${q.i}`,`v${q.i}`,`θ${q.i}`,`u${q.j}`,`v${q.j}`,`θ${q.j}`],ll=[`u′${q.i}`,`v′${q.i}`,`θ${q.i}`,`u′${q.j}`,`v′${q.j}`,`θ${q.j}`],d=document.createElement("div");d.className="card elementSection";d.id="sec7-"+q.e;d.innerHTML=`<h2>7.${q.e} Element ${q.e}: Node ${q.i} → Node ${q.j}</h2>
+<div class="eq">L = ${fmt(q.L)} m, &nbsp; Aₑ = ${fmt(q.A)} m², &nbsp; θ = ${fmt(q.ang)}°, &nbsp; l = ${fmt(q.l)}, &nbsp; m = ${fmt(q.m)}</div>
+<p><b>Local stiffness matrix [k′]<sup>(${q.e})</sup></b></p><div class="scroll">${mat(q.kp,ll)}</div>
+<p><b>Transformation matrix [T]</b></p><div class="scroll">${mat(q.T,gl)}</div>
+<p><b>Global-frame element stiffness [k]<sup>(${q.e})</sup> = [T]<sup>T</sup>[k′][T]</b></p><div class="scroll">${mat(q.kg,gl)}</div>
+<p class="small">DOF mapping → {${3*q.i-2}, ${3*q.i-1}, ${3*q.i}, ${3*q.j-2}, ${3*q.j-1}, ${3*q.j}}</p>`;box.appendChild(d)});
+let nd=3*nn,K=Array.from({length:nd},()=>Array(nd).fill(0));es.forEach(q=>{let mp=[3*(q.i-1),3*(q.i-1)+1,3*(q.i-1)+2,3*(q.j-1),3*(q.j-1)+1,3*(q.j-1)+2];for(let r=0;r<6;r++)for(let c=0;c<6;c++)K[mp[r]][mp[c]]+=q.kg[r][c]});let labs=[];for(let n=1;n<=nn;n++)labs.push(`u${n}`,`v${n}`,`θ${n}`);$("global").innerHTML=mat(K,labs);window.FR={ns,es,K,labs};
+$("teachButtons").innerHTML="";es.forEach(q=>{let b=document.createElement("button");b.type="button";b.textContent=`Element ${q.e} → 7.${q.e}`;b.addEventListener("click",()=>{selectEl(q.e);let t=$("sec7-"+q.e);if(t){location.hash="sec7-"+q.e;t.scrollIntoView()}});$("teachButtons").appendChild(b)});$("results").classList.remove("hidden");$("results").scrollIntoView()}
+catch(e){$("err").textContent=e.message||String(e);$("results").classList.add("hidden")}}
+function example(){$("E").value=200e9;$("I").value=8.333e-6;$("nn").value=3;$("ne").value=2;nodeRows();elemRows();let q=[[0,0],[4,0],[4,3]];$("nodeRows").querySelectorAll("tr").forEach((r,i)=>{r.querySelector(".x").value=q[i][0];r.querySelector(".y").value=q[i][1]});let e=[[1,2],[2,3]];$("elemRows").querySelectorAll("tr").forEach((r,i)=>{r.querySelector(".ni").value=e[i][0];r.querySelector(".nj").value=e[i][1];r.querySelector(".ae").value=[0.005,0.007][i]});calc()}
+$("nn").addEventListener("change",nodeRows);$("ne").addEventListener("change",elemRows);$("calc").addEventListener("click",calc);$("example").addEventListener("click",example);nodeRows();elemRows()})();
+</script><a class="fem-bottom-home" href="index.html">⌂ FEM Home</a>
+<div class="fem-module-nav"><a href="beam2d.html">← 2D Beam</a><a href="cst.html">CST →</a></div><a class="fem-top" href="#" aria-label="Back to top">↑</a></body></html>

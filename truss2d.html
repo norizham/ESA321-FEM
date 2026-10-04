@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2D Truss FEM Learning Module</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;background:#f4f6f9;color:#182235}
+header{background:#17365d;color:#fff;padding:20px 28px} main{max-width:1450px;margin:auto;padding:20px}
+.card{background:#fff;border:1px solid #d7dde6;border-radius:10px;padding:18px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+label{display:block;font-weight:bold;font-size:13px;margin-bottom:5px}
+input,select{width:100%;box-sizing:border-box;padding:8px;border:1px solid #b8c2d0;border-radius:6px;background:#fff}
+button{padding:10px 16px;border:0;border-radius:7px;background:#1f5fae;color:#fff;font-weight:bold;cursor:pointer;margin-right:8px}
+button.alt{background:#667085} table{border-collapse:collapse;max-width:100%}
+th,td{border:1px solid #ccd3dd;padding:6px 8px;text-align:center;white-space:nowrap} th{background:#eef2f7}
+.scroll{overflow:auto}.error{color:#b42318;font-weight:bold;margin-top:10px}.matrix td{min-width:82px}
+.dof{font-weight:bold;background:#f8fafc}.nonzero{background:#fff2a8;font-weight:bold}
+.teachbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+.teachbtn{background:#17365d}.teachbtn.active{outline:4px solid #ffd966}
+.mapbox{background:#f8fafc;border-left:5px solid #17365d;padding:12px 14px;margin:12px 0}
+.assemblyHit{background:#ffd966!important;font-weight:bold;box-shadow:inset 0 0 0 2px #c08a00}
+.selectedCard{outline:4px solid #ffd966}.elementSection{scroll-margin-top:16px}
+.stepbox{background:#eef4fb;border:1px solid #b9cbe3;border-radius:8px;padding:12px;margin:12px 0}.eq{text-align:center;font-family:"Times New Roman",serif;font-size:18px;margin:8px}
+.small{font-size:13px;color:#5d6878}.hidden{display:none!important}
+#trussCanvas{width:100%;height:440px;border:1px solid #ccd3dd;border-radius:8px;background:#fff}
+.modeBox{padding:12px;background:#eef4fb;border-radius:8px;margin:12px 0}
+@media(max-width:800px){.grid{grid-template-columns:1fr 1fr}} @media(max-width:520px){.grid{grid-template-columns:1fr}}
+
+.fem-course-header{display:flex;align-items:center;gap:22px}.fem-course-logo{width:170px;height:96px;object-fit:contain;background:#fff;border-radius:8px;padding:5px;box-sizing:border-box}.fem-course-text{min-width:0}.fem-course-kicker{font-size:15px;font-weight:700;letter-spacing:.04em;color:#dce7f5;margin-bottom:4px}.fem-course-header h1{margin:0 0 5px}.fem-course-subtitle{color:#dce7f5}.fem-site-brand{font-weight:700;margin-right:10px;white-space:nowrap}@media(max-width:620px){.fem-course-header{align-items:flex-start;gap:12px}.fem-course-logo{width:115px;height:68px}.fem-course-kicker{font-size:12px}.fem-course-header h1{font-size:24px}}
+.fem-affiliation{font-size:14px;margin-top:5px;color:#dce7f5}.fem-author{font-size:14px;font-weight:700;margin-top:3px;color:#fff}
+/* Proper mathematical matrix notation */
+.matrix-eq{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:10px 0;font:21px "Times New Roman",serif}
+.math-matrix{position:relative;display:inline-block;padding:2px 10px;vertical-align:middle}
+.math-matrix:before,.math-matrix:after{content:"";position:absolute;top:0;bottom:0;width:7px;border-top:2px solid currentColor;border-bottom:2px solid currentColor}
+.math-matrix:before{left:0;border-left:2px solid currentColor}.math-matrix:after{right:0;border-right:2px solid currentColor}
+.math-matrix table{border-collapse:collapse;margin:0!important;width:auto!important;background:transparent!important;box-shadow:none!important}
+.math-matrix td{border:0!important;padding:2px 9px!important;text-align:center!important;min-width:auto!important;background:transparent!important;font:inherit!important}
+.math-frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05}.math-frac .num{border-bottom:1.6px solid currentColor;padding:0 5px 3px}.math-frac .den{padding:3px 5px 0}.display-eq{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0;font:21px "Times New Roman",serif}</style>
+
+<style id="immersive-ui">
+:root{--navy:#0b2342;--blue:#17365d;--accent:#2f75b5;--ink:#182235;--muted:#667085;--paper:#f4f7fb;--line:#d7e0eb;--gold:#f2b134}
+html{scroll-behavior:smooth}body{background:radial-gradient(circle at 15% 0,#edf5ff 0,transparent 30%),#f4f6f9}
+.fem-site-nav{backdrop-filter:blur(10px);background:rgba(11,35,66,.96)!important;border-bottom:1px solid rgba(255,255,255,.12)}
+.fem-site-nav a{transition:.2s ease}.fem-site-nav a:hover{transform:translateY(-1px)}
+.fem-quick-select{margin-left:auto;background:#fff;color:#17365d;border:0;border-radius:7px;padding:8px 10px;font-weight:700;max-width:180px}
+header{background:linear-gradient(125deg,#0b2342 0%,#17365d 58%,#2f75b5 100%)!important;position:relative;overflow:hidden}
+header:after{content:"";position:absolute;width:360px;height:360px;border:1px solid rgba(255,255,255,.12);border-radius:50%;right:-90px;top:-210px;box-shadow:0 0 0 45px rgba(255,255,255,.035),0 0 0 90px rgba(255,255,255,.025)}
+.fem-course-header{position:relative;z-index:1}.fem-course-logo{box-shadow:0 10px 28px rgba(0,0,0,.2)}
+.fem-course-kicker{color:#bcd9f7!important}.fem-affiliation{line-height:1.45}.fem-author{margin-top:7px!important}
+.card,.module-card{box-shadow:0 5px 18px rgba(15,39,71,.06)!important;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}.card:hover{border-color:#b9cce1}.module-card:hover{transform:translateY(-5px)!important;box-shadow:0 14px 30px rgba(15,39,71,.13)!important}
+.module-card span{display:inline-flex;align-items:center;gap:5px}.module-card span:after{content:"›";font-size:20px;line-height:1}.module-card span{font-size:0}.module-card span:before{content:"Open module";font-size:14px}
+.fem-pic{transition:transform .25s ease}.module-card:hover .fem-pic{transform:scale(1.02)}
+button{transition:transform .15s ease,box-shadow .15s ease}button:hover{transform:translateY(-1px);box-shadow:0 5px 12px rgba(31,95,174,.22)}
+.fem-context{max-width:1450px;margin:14px auto 0;padding:0 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#667085;font:600 13px Arial,sans-serif}.fem-context a{color:#1f5fae;text-decoration:none}.fem-context strong{color:#17365d}
+.fem-module-nav{max-width:1450px;margin:8px auto 34px;padding:0 20px;display:flex;justify-content:space-between;gap:12px}.fem-module-nav a{flex:1;max-width:320px;border:1px solid #cbd8e7;background:#fff;color:#17365d;text-decoration:none;border-radius:10px;padding:12px 15px;font:700 14px Arial,sans-serif;box-shadow:0 3px 10px rgba(15,39,71,.05)}.fem-module-nav a:last-child{text-align:right}.fem-module-nav a:hover{border-color:#6f9bc8;box-shadow:0 7px 18px rgba(15,39,71,.1)}
+.fem-top{position:fixed;right:20px;bottom:20px;width:42px;height:42px;border-radius:50%;background:#17365d;color:#fff;text-decoration:none;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.22);z-index:90;font:bold 20px Arial}
+.home-badges{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:18px auto 30px}.home-badge{background:#fff;border:1px solid #d7e0eb;border-radius:999px;padding:8px 13px;color:#17365d;font-weight:700;font-size:13px;box-shadow:0 3px 10px rgba(15,39,71,.05)}
+@media(max-width:800px){.fem-quick-select{width:100%;max-width:none;margin-left:0}.fem-context{align-items:flex-start;flex-direction:column}.fem-module-nav{flex-direction:column}.fem-module-nav a{max-width:none}.fem-module-nav a:last-child{text-align:left}}
+</style><script src="course-access.js"></script><style id="truss-learning-ui">
+.learning-shell{max-width:1450px;margin:18px auto 0;padding:0 20px}.learning-intro{background:linear-gradient(135deg,#fff,#edf5ff);border:1px solid #cdddec;border-radius:14px;padding:20px;box-shadow:0 8px 24px rgba(15,39,71,.08)}
+.learning-path{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}.learning-step{background:#fff;border:1px solid #cbd8e7;border-radius:999px;padding:7px 10px;color:#17365d;font-weight:700;font-size:12px}.lesson-tabs{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 12px}.lesson-tab{background:#e9f0f8;color:#17365d;border:1px solid #c8d6e6;box-shadow:none}.lesson-tab.active{background:#17365d;color:#fff}.lesson-panel{display:none}.lesson-panel.active{display:block}.lesson-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.concept-card{background:#fff;border:1px solid #d7e0eb;border-radius:12px;padding:16px;box-shadow:0 4px 14px rgba(15,39,71,.05)}.concept-card h3{margin-top:0;color:#17365d}.concept-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#17365d;color:#fff;font-weight:800;margin-bottom:10px}.formula-box{background:#f8fbff;border:1px solid #cbdced;border-radius:10px;padding:15px;text-align:center;font:21px 'Times New Roman',serif;margin:10px 0}.pdf-frame{width:100%;height:720px;border:1px solid #cbd8e7;border-radius:10px;background:#fff}.mini-callout{background:#fff8e6;border-left:5px solid #f2b134;padding:12px;margin:12px 0}.lecture-link{display:inline-block;margin-top:10px;color:#1f5fae;font-weight:700;text-decoration:none}.practice-box{background:#fff;border:1px solid #d7e0eb;border-radius:12px;padding:18px}.reveal{display:none;background:#eef7ee;border-left:5px solid #3a8b4e;padding:12px;margin-top:12px}.practice-actions{display:flex;gap:8px;flex-wrap:wrap}.worked-diagram{margin:18px 0;padding:14px;border:1px solid #cbd5e1;border-radius:14px;background:#f8fafc;overflow:auto}.worked-diagram svg{display:block;width:100%;min-width:650px;height:auto}.result-box{background:#eef7ee;border:1px solid #b9d9c0;border-radius:12px;padding:15px}.math-vector td{padding:2px 12px!important}
+@media(max-width:900px){.lesson-grid{grid-template-columns:1fr 1fr}.pdf-frame{height:560px}}@media(max-width:600px){.lesson-grid{grid-template-columns:1fr}.pdf-frame{height:480px}.learning-shell{padding:0 12px}}
+</style></head>
+<body>
+<style id="fem-site-nav-style">
+.fem-site-nav{background:#0f2747;color:#fff;padding:10px 18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:sticky;top:0;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,.16);font-family:Arial,sans-serif}
+.fem-site-brand{font-weight:700;margin-right:10px;white-space:nowrap}.fem-site-nav a{color:#fff;text-decoration:none;padding:8px 11px;border-radius:6px;font-size:14px;font-weight:600}.fem-site-nav a:hover{background:#285582}.fem-site-nav a.active{background:#fff;color:#17365d}.fem-bottom-home{display:block;width:max-content;margin:24px auto 36px;padding:10px 18px;background:#17365d;color:#fff!important;text-decoration:none;border-radius:7px;font:bold 14px Arial,sans-serif}
+@media(max-width:700px){.fem-site-nav{position:relative}.fem-site-brand{width:100%}.fem-site-nav a{font-size:13px;padding:7px 9px}}
+.fem-affiliation{font-size:14px;margin-top:5px;color:#dce7f5}.fem-author{font-size:14px;font-weight:700;margin-top:3px;color:#fff}</style><nav class="fem-site-nav"><span class="fem-site-brand">Interactive FEM Learning Suite</span><a href="index.html">Home</a><a href="bar.html">1D Bar</a><a href="truss2d.html" class="active">2D Truss</a><a href="beam2d.html">2D Beam</a><a href="frame2d.html">2D Frame</a><a href="cst.html">CST</a><a href="truss3d.html">3D Truss</a><a href="beam3d.html">3D Beam</a><select class="fem-quick-select" aria-label="Jump to FEM module" onchange="if(this.value) location.href=this.value"><option value="index.html">Home</option><option value="bar.html">1D Bar</option><option value="truss2d.html" selected>2D Truss</option><option value="beam2d.html">2D Beam</option><option value="frame2d.html">2D Frame</option><option value="cst.html">CST</option><option value="truss3d.html">3D Truss</option><option value="beam3d.html">3D Beam</option></select></nav>
+<header><div class="fem-course-header"><img src="aerospace-logo.jpg" class="fem-course-logo" alt="School of Aerospace Engineering"><div class="fem-course-text"><div class="fem-course-kicker">ESA 321 – FINITE ELEMENT METHOD</div><h1>2D Truss FEM Learning Module</h1><div class="fem-course-subtitle">Up to 4 elements • coordinate mode or angle mode • structure drawing • element and assembled stiffness matrices</div><div class="fem-affiliation">School of Aerospace Engineering, Universiti Sains Malaysia, Tuanku Syed Sirajuddin Engineering Campus</div><div class="fem-author">Dr. Norizham Abdul Razak</div></div></div></header><div class="fem-context"><div><a href="index.html">ESA 321</a> &nbsp;›&nbsp; <strong>2D Truss FEM Learning Module</strong></div><div>Use the module selector above to jump between element types.</div></div>
+
+<section class="learning-shell" id="learn">
+<div class="learning-intro"><h2>Learn the 2D Truss Element</h2><p>This module follows the ESA 321 truss lecture: truss assumptions, two translational DOFs per node, direction cosines, element stiffness in the global reference frame, assembly, boundary conditions and solution.</p><div class="learning-path"><span class="learning-step">1 · Properties</span><span class="learning-step">2 · DOFs</span><span class="learning-step">3 · Direction cosines</span><span class="learning-step">4 · Element stiffness</span><span class="learning-step">5 · Assembly</span><span class="learning-step">6 · Solve & interpret</span></div></div>
+<div class="lesson-tabs" role="tablist"><button class="lesson-tab active" data-panel="concepts">Concepts</button><button class="lesson-tab" data-panel="notes">Lecture Notes</button><button class="lesson-tab" data-panel="worked">Worked Example</button><button class="lesson-tab" data-panel="practice">Practice</button><button class="lesson-tab" data-panel="calculator">Interactive FEM</button></div>
+<div class="lesson-panel active" id="panel-concepts"><div class="lesson-grid">
+<div class="concept-card"><div class="concept-num">1</div><h3>Truss behaviour</h3><p>Ideal members are pin-connected at their ends and carry axial load only. Loads act at the pins; member weight is neglected.</p></div>
+<div class="concept-card"><div class="concept-num">2</div><h3>Nodal DOFs</h3><p>Each node has two translational DOFs in 2D.</p><div class="formula-box matrix-eq"><span>{d}<sup>(e)</sup> =</span><span class="math-matrix math-vector"><table><tr><td>u<sub>i</sub></td></tr><tr><td>v<sub>i</sub></td></tr><tr><td>u<sub>j</sub></td></tr><tr><td>v<sub>j</sub></td></tr></table></span></div></div>
+<div class="concept-card"><div class="concept-num">3</div><h3>Direction cosines</h3><div class="display-eq"><span>l = cos θ</span><span>,</span><span>m = sin θ</span></div><p>θ is measured counter-clockwise from the global +x axis in the node i → node j direction.</p></div>
+<div class="concept-card"><div class="concept-num">4</div><h3>Global element stiffness</h3><div class="formula-box matrix-eq"><span>[k]<sup>(e)</sup>=</span><span class="math-frac"><span class="num">EA</span><span class="den">L</span></span><span class="math-matrix"><table><tr><td>l²</td><td>lm</td><td>−l²</td><td>−lm</td></tr><tr><td>lm</td><td>m²</td><td>−lm</td><td>−m²</td></tr><tr><td>−l²</td><td>−lm</td><td>l²</td><td>lm</td></tr><tr><td>−lm</td><td>−m²</td><td>lm</td><td>m²</td></tr></table></span></div></div>
+<div class="concept-card"><div class="concept-num">5</div><h3>Global assembly</h3><p>For n nodes, the total number of structural DOFs is 2n. Map each element's four DOFs into the matching global rows and columns and add overlapping contributions.</p></div>
+<div class="concept-card"><div class="concept-num">6</div><h3>Boundary conditions</h3><p>Apply prescribed u and v values at supports, solve the reduced system for free nodal displacements, then recover reactions from the original global equation.</p></div>
+</div><div class="mini-callout"><b>Learning objective:</b> apply FEM using the truss element for solving structural problems.</div></div>
+<div class="lesson-panel" id="panel-notes"><div class="card"><h2>ESA 321 Lecture Notes · Truss Element</h2><p class="small">The complete 42-page lecture note is embedded here.</p><iframe class="pdf-frame" src="ESA321_Truss_Element_Lecture_Notes.pdf#view=FitH" title="ESA 321 Truss Element Lecture Notes"></iframe><a class="lecture-link" href="ESA321_Truss_Element_Lecture_Notes.pdf" target="_blank">Open lecture notes in a new tab ↗</a></div></div>
+<div class="lesson-panel" id="panel-worked">
+<div class="card"><h2>Worked Example · Two-Member Plane Truss</h2><p>Two identical truss members, each with Young's modulus <i>E</i>, cross-sectional area <i>A</i> and length <i>L</i>, meet at node 2. Nodes 1 and 3 are restrained. Element 1 is at 45° and Element 2 is at 135°. Loads P<sub>1</sub> and P<sub>2</sub> act at node 2 in the global x and y directions.</p>
+<div class="worked-diagram"><svg viewBox="0 0 820 420" role="img" aria-label="Two-member truss with nodes 1 and 3 fixed and loads P1 and P2 at node 2"><defs><marker id="ta" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0 L0 6 L9 3z" fill="#b91c1c"/></marker></defs><line x1="150" y1="345" x2="470" y2="210" stroke="#2563eb" stroke-width="10"/><line x1="470" y1="210" x2="150" y2="75" stroke="#0f766e" stroke-width="10"/><line x1="115" y1="45" x2="115" y2="375" stroke="#475569" stroke-width="7"/><g stroke="#94a3b8" stroke-width="2"><path d="M75 65l40-20M75 100l40-20M75 135l40-20M75 310l40-20M75 345l40-20M75 380l40-20"/></g><g fill="#fff" stroke="#0f172a" stroke-width="3"><circle cx="150" cy="345" r="14"/><circle cx="470" cy="210" r="14"/><circle cx="150" cy="75" r="14"/></g><line x1="470" y1="210" x2="625" y2="210" stroke="#b91c1c" stroke-width="5" marker-end="url(#ta)"/><line x1="470" y1="210" x2="470" y2="80" stroke="#b91c1c" stroke-width="5" marker-end="url(#ta)"/><g font-family="Arial" font-size="20" fill="#0f172a"><text x="128" y="375">1</text><text x="490" y="235">2</text><text x="128" y="65">3</text><text x="300" y="305">Element 1 · 45°</text><text x="300" y="115">Element 2 · 135°</text><text x="635" y="216" fill="#b91c1c">P₁</text><text x="480" y="85" fill="#b91c1c">P₂</text></g></svg></div></div>
+<div class="card"><h2>Step 1 · Define the Structural DOFs</h2><p>Three nodes × two DOFs per node gives six global DOFs.</p><div class="formula-box matrix-eq"><span>{d}=</span><span class="math-matrix math-vector"><table><tr><td>u₁</td></tr><tr><td>v₁</td></tr><tr><td>u₂</td></tr><tr><td>v₂</td></tr><tr><td>u₃</td></tr><tr><td>v₃</td></tr></table></span></div></div>
+<div class="card"><h2>Step 2 · Write the General 2D Truss Stiffness Matrix</h2><div class="formula-box matrix-eq"><span>[k]<sup>(e)</sup>=</span><span class="math-frac"><span class="num">EA</span><span class="den">L</span></span><span class="math-matrix"><table><tr><td>l²</td><td>lm</td><td>−l²</td><td>−lm</td></tr><tr><td>lm</td><td>m²</td><td>−lm</td><td>−m²</td></tr><tr><td>−l²</td><td>−lm</td><td>l²</td><td>lm</td></tr><tr><td>−lm</td><td>−m²</td><td>lm</td><td>m²</td></tr></table></span></div></div>
+<div class="card"><h2>Step 3 · Element 1 Direction Cosines</h2><div class="display-eq"><span>θ₁ = 45°</span></div><div class="display-eq"><span>l₁ = cos45° = √2/2</span><span>,</span><span>m₁ = sin45° = √2/2</span></div><div class="display-eq"><span>l₁² = m₁² = l₁m₁ = 0.5</span></div></div>
+<div class="card"><h2>Step 4 · Element 1 Stiffness Matrix</h2><div class="formula-box matrix-eq"><span>[k]<sup>(1)</sup>=</span><span class="math-frac"><span class="num">EA</span><span class="den">L</span></span><span class="math-matrix"><table><tr><td>0.5</td><td>0.5</td><td>−0.5</td><td>−0.5</td></tr><tr><td>0.5</td><td>0.5</td><td>−0.5</td><td>−0.5</td></tr><tr><td>−0.5</td><td>−0.5</td><td>0.5</td><td>0.5</td></tr><tr><td>−0.5</td><td>−0.5</td><td>0.5</td><td>0.5</td></tr></table></span></div><p>DOF mapping: (u₁, v₁, u₂, v₂).</p></div>
+<div class="card"><h2>Step 5 · Element 2 Direction Cosines</h2><div class="display-eq"><span>θ₂ = 135°</span></div><div class="display-eq"><span>l₂ = cos135° = −√2/2</span><span>,</span><span>m₂ = sin135° = √2/2</span></div><div class="display-eq"><span>l₂² = 0.5</span><span>,</span><span>m₂² = 0.5</span><span>,</span><span>l₂m₂ = −0.5</span></div></div>
+<div class="card"><h2>Step 6 · Element 2 Stiffness Matrix</h2><div class="formula-box matrix-eq"><span>[k]<sup>(2)</sup>=</span><span class="math-frac"><span class="num">EA</span><span class="den">L</span></span><span class="math-matrix"><table><tr><td>0.5</td><td>−0.5</td><td>−0.5</td><td>0.5</td></tr><tr><td>−0.5</td><td>0.5</td><td>0.5</td><td>−0.5</td></tr><tr><td>−0.5</td><td>0.5</td><td>0.5</td><td>−0.5</td></tr><tr><td>0.5</td><td>−0.5</td><td>−0.5</td><td>0.5</td></tr></table></span></div><p>DOF mapping: (u₂, v₂, u₃, v₃).</p></div>
+<div class="card"><h2>Step 7 · Assemble the 6 × 6 Global Stiffness Matrix</h2><div class="formula-box matrix-eq"><span>[K]=</span><span class="math-frac"><span class="num">EA</span><span class="den">L</span></span><span class="math-matrix"><table><tr><td>.5</td><td>.5</td><td>−.5</td><td>−.5</td><td>0</td><td>0</td></tr><tr><td>.5</td><td>.5</td><td>−.5</td><td>−.5</td><td>0</td><td>0</td></tr><tr><td>−.5</td><td>−.5</td><td>1</td><td>0</td><td>−.5</td><td>.5</td></tr><tr><td>−.5</td><td>−.5</td><td>0</td><td>1</td><td>.5</td><td>−.5</td></tr><tr><td>0</td><td>0</td><td>−.5</td><td>.5</td><td>.5</td><td>−.5</td></tr><tr><td>0</td><td>0</td><td>.5</td><td>−.5</td><td>−.5</td><td>.5</td></tr></table></span></div></div>
+<div class="card"><h2>Step 8 · Apply Boundary Conditions</h2><p>Nodes 1 and 3 are restrained:</p><div class="display-eq"><span>u₁ = v₁ = u₃ = v₃ = 0</span></div><p>The free DOFs are u₂ and v₂.</p></div>
+<div class="card"><h2>Step 9 · Form the Reduced System</h2><div class="formula-box matrix-eq"><span class="math-frac"><span class="num">EA</span><span class="den">L</span></span><span class="math-matrix"><table><tr><td>1</td><td>0</td></tr><tr><td>0</td><td>1</td></tr></table></span><span class="math-matrix math-vector"><table><tr><td>u₂</td></tr><tr><td>v₂</td></tr></table></span><span>=</span><span class="math-matrix math-vector"><table><tr><td>P₁</td></tr><tr><td>P₂</td></tr></table></span></div></div>
+<div class="card"><h2>Step 10 · Solve the Node 2 Displacements</h2><div class="formula-box matrix-eq"><span class="math-matrix math-vector"><table><tr><td>u₂</td></tr><tr><td>v₂</td></tr></table></span><span>=</span><span class="math-frac"><span class="num">L</span><span class="den">EA</span></span><span class="math-matrix math-vector"><table><tr><td>P₁</td></tr><tr><td>P₂</td></tr></table></span></div><div class="result-box"><div class="display-eq"><span>u₂ =</span><span class="math-frac"><span class="num">P₁L</span><span class="den">EA</span></span><span>,</span><span>v₂ =</span><span class="math-frac"><span class="num">P₂L</span><span class="den">EA</span></span></div></div></div>
+<div class="card"><h2>Step 11 · Recover the Complete Displacement Vector</h2><div class="formula-box matrix-eq"><span>{d}=</span><span class="math-matrix math-vector"><table><tr><td>0</td></tr><tr><td>0</td></tr><tr><td>P₁L/(EA)</td></tr><tr><td>P₂L/(EA)</td></tr><tr><td>0</td></tr><tr><td>0</td></tr></table></span></div></div>
+<div class="card"><h2>Step 12 · Calculate Support Reactions</h2><p>Substitute the complete displacement vector into {F} = [K]{d}.</p><div class="formula-box matrix-eq"><span>{F}=</span><span class="math-matrix math-vector"><table><tr><td>−(P₁+P₂)/2</td></tr><tr><td>−(P₁+P₂)/2</td></tr><tr><td>P₁</td></tr><tr><td>P₂</td></tr><tr><td>(−P₁+P₂)/2</td></tr><tr><td>(P₁−P₂)/2</td></tr></table></span></div><p>The first two and last two entries are the reactions at nodes 1 and 3. Their sums balance P₁ and P₂ in the global x and y directions.</p></div>
+<div class="card"><h2>Step 13 · Final Results</h2><div class="lesson-grid"><div class="concept-card"><h3>Node 2 displacement</h3><div class="display-eq"><span>u₂ = P₁L/(EA)</span></div><div class="display-eq"><span>v₂ = P₂L/(EA)</span></div></div><div class="concept-card"><h3>Node 1 reactions</h3><div class="display-eq"><span>R₁x = −(P₁+P₂)/2</span></div><div class="display-eq"><span>R₁y = −(P₁+P₂)/2</span></div></div><div class="concept-card"><h3>Node 3 reactions</h3><div class="display-eq"><span>R₃x = (−P₁+P₂)/2</span></div><div class="display-eq"><span>R₃y = (P₁−P₂)/2</span></div></div></div></div>
+</div>
+<div class="lesson-panel" id="panel-practice"><div class="practice-box"><h2>Practice · Three-Member Truss</h2><p>Use the practice problem from the lecture notes: determine the horizontal displacement of node 1. The structure has three members, A = 0.05 m², E = 20 × 10⁶ N/m², a 500 N horizontal load at node 1, and the dimensions shown in the lecture diagram.</p><div class="worked-diagram"><svg viewBox="0 0 760 430" role="img" aria-label="Three member truss practice problem"><defs><marker id="pa" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0 L0 6 L9 3z" fill="#b91c1c"/></marker></defs><line x1="370" y1="75" x2="150" y2="345" stroke="#17365d" stroke-width="10"/><line x1="370" y1="75" x2="370" y2="345" stroke="#17365d" stroke-width="10"/><line x1="370" y1="75" x2="560" y2="345" stroke="#17365d" stroke-width="10"/><g fill="#fff" stroke="#0f172a" stroke-width="3"><circle cx="370" cy="75" r="14"/><circle cx="150" cy="345" r="14"/><circle cx="370" cy="345" r="14"/><circle cx="560" cy="345" r="14"/></g><line x1="370" y1="75" x2="230" y2="75" stroke="#b91c1c" stroke-width="5" marker-end="url(#pa)"/><g font-family="Arial" font-size="19"><text x="380" y="58">1</text><text x="135" y="375">2</text><text x="360" y="375">3</text><text x="550" y="375">4</text><text x="245" y="195">e1</text><text x="382" y="220">e2</text><text x="485" y="195">e3</text><text x="240" y="58" fill="#b91c1c">500 N</text><text x="590" y="160">A = 0.05 m²</text><text x="590" y="188">E = 20 × 10⁶ N/m²</text><text x="215" y="410">4 m</text><text x="465" y="410">3 m</text><text x="575" y="230">4 m high</text></g></svg></div><p><b>Determine:</b> the element direction cosines, element stiffness matrices, assembled global stiffness matrix, horizontal displacement of node 1, and support reactions.</p><div class="practice-actions"><button type="button" onclick="document.getElementById('th1').style.display='block'">Hint 1</button><button type="button" onclick="document.getElementById('th2').style.display='block'">Hint 2</button></div><div class="reveal" id="th1"><b>Hint 1:</b> assign global DOFs (u, v) to all four nodes and calculate each member length from the geometry before evaluating l and m.</div><div class="reveal" id="th2"><b>Hint 2:</b> nodes 2, 3 and 4 are supports. Apply their prescribed displacements before solving for the free DOFs at node 1.</div></div></div>
+<div class="lesson-panel" id="panel-calculator"><div class="card"><h2>Interactive FEM Workspace</h2><p>Define your own 2D truss, vary the cross-sectional area of each element, inspect direction cosines and element stiffness matrices, and follow the assembly into the global stiffness matrix.</p></div></div>
+</section>
+
+<main id="calculator-workspace" style="display:none">
+<div class="card">
+<h2>1. Model Input</h2>
+<div class="grid">
+<div><label>E (N/m²)</label><input id="E" type="number" step="any" value="200000000000"></div>
+
+<div><label>Number of nodes</label><input id="nNodes" type="number" min="2" max="5" value="4"></div>
+<div><label>Number of elements</label><input id="nElems" type="number" min="1" max="4" value="3"></div>
+</div>
+<div class="modeBox">
+<label>Geometry input method</label>
+<select id="mode">
+<option value="coords">Node Coordinates — calculate L and θ automatically</option>
+<option value="angles">Element Length & Angle — calculate node positions for drawing</option>
+</select>
+</div>
+</div>
+
+<div id="coordCard" class="card">
+<h2>2. Node Coordinates</h2>
+<p class="small">Enter each node position. The program calculates each element's length and angle.</p>
+<div class="scroll"><table><thead><tr><th>Node</th><th>x (m)</th><th>y (m)</th></tr></thead><tbody id="nodeRows"></tbody></table></div>
+</div>
+
+<div class="card">
+<h2>3. Element Data</h2>
+<p id="elemHelp" class="small"></p>
+<div class="scroll"><table><thead id="elemHead"></thead><tbody id="elemRows"></tbody></table></div>
+<br><button id="calcBtn">Calculate & Draw</button><button id="exampleBtn" class="alt">Load Example</button>
+<div id="error" class="error"></div>
+</div>
+
+<div id="results" class="hidden">
+<div class="card"><h2>4. Structure Drawing</h2><canvas id="trussCanvas" width="1200" height="440"></canvas>
+<p id="drawNote" class="small"></p></div>
+<div class="card"><h2>5. Geometry and Direction Cosines</h2>
+<div class="eq">l = cos θ, &nbsp; m = sin θ, &nbsp; l² = cos²θ, &nbsp; m² = sin²θ, &nbsp; lm = sinθ cosθ</div>
+<div id="terms" class="scroll"></div></div>
+<div class="card">
+<h2>6. Interactive Assembly Teaching Mode</h2>
+<p class="small">Select an element to see how its four element DOFs map into the structural global stiffness matrix.</p>
+<div id="teachButtons" class="teachbar"></div>
+<div id="teachInfo" class="stepbox">Calculate the structure, then select an element.</div>
+</div>
+<div id="elements"></div>
+<div class="card"><h2>7. Assembled Global Stiffness Matrix [K]</h2>
+<p class="small">Global DOF order: u1, v1, u2, v2, ... . Boundary conditions are not applied. <b>Non-zero stiffness terms are highlighted.</b></p>
+<div id="global" class="scroll"></div></div>
+</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+function clean(x){return Math.abs(x)<1e-10?0:x}
+function txt(x){x=clean(x);let a=Math.abs(x);return(a!==0&&(a>=1e6||a<1e-3))?x.toExponential(4):x.toFixed(4)}
+function buildNodes(){
+ let n=Math.max(2,Math.min(5,parseInt($("nNodes").value)||2)),old=[];
+ $("nodeRows").querySelectorAll("tr").forEach(r=>{let q=r.querySelectorAll("input");old.push([q[0].value,q[1].value])});
+ $("nodeRows").innerHTML="";
+ for(let i=0;i<n;i++){let v=old[i]||[i,0];$("nodeRows").insertAdjacentHTML("beforeend",
+ `<tr><td><b>${i+1}</b></td><td><input class="nx" type="number" step="any" value="${v[0]}"></td><td><input class="ny" type="number" step="any" value="${v[1]}"></td></tr>`)}
+}
+function buildElems(){
+ let n=Math.max(1,Math.min(4,parseInt($("nElems").value)||1)),angle=$("mode").value==="angles",old=[];
+ $("elemRows").querySelectorAll("tr").forEach(r=>{let q=r.querySelectorAll("input");old.push(Array.from(q).map(x=>x.value))});
+ $("elemHead").innerHTML=angle?
+ "<tr><th>Element</th><th>Node i</th><th>Node j</th><th>Area Aₑ (m²)</th><th>L (m)</th><th>θ (deg)</th></tr>":
+ "<tr><th>Element</th><th>Node i</th><th>Node j</th><th>Area Aₑ (m²)</th></tr>";
+ $("elemHelp").textContent=angle?
+ "Enter connectivity, element length and angle measured counter-clockwise from global +x in the Node i → Node j direction. In angle mode, the number of active nodes is inferred automatically from the connectivity.":
+ "Enter connectivity only. Length and angle are obtained from the node coordinates.";
+ $("elemRows").innerHTML="";
+ for(let e=0;e<n;e++){
+   let v=old[e]||[e+1,e+2,0.0005,1,0];
+   let extra=angle?`<td><input class="len" type="number" step="any" value="${v[3]||1}"></td><td><input class="ang" type="number" step="any" value="${v[4]||0}"></td>`:"";
+   $("elemRows").insertAdjacentHTML("beforeend",`<tr><td><b>${e+1}</b></td><td><input class="ni" type="number" value="${v[0]}"></td><td><input class="nj" type="number" value="${v[1]}"></td><td><input class="ae" type="number" step="any" value="${v[2]||0.0005}"></td>${extra}</tr>`);
+ }
+}
+function updateMode(){
+ let angle=$("mode").value==="angles";
+ $("coordCard").classList.toggle("hidden",angle);
+ buildElems();
+}
+function matrixHTML(M,labels,highlightNonZero=false){
+ let s="<table class='matrix'><thead><tr>";labels.forEach(x=>s+=`<th class="dof">${x}</th>`);s+="<th></th></tr></thead><tbody>";
+ M.forEach((row,r)=>{
+   s+="<tr>";
+   row.forEach(v=>{
+     let nz=Math.abs(v)>1e-8;
+     s+=`<td class="${highlightNonZero&&nz?'nonzero':''}">${txt(v)}</td>`;
+   });
+   s+=`<th class="dof">${labels[r]}</th></tr>`;
+ });
+ return s+"</tbody></table>";
+}
+function deriveAngleNodes(nNodes, raw){
+ // reconstruct coordinates from connected elements; first referenced node is origin.
+ let nodes=Array(nNodes).fill(null), changed=true;
+ if(raw.length) nodes[raw[0].i-1]={x:0,y:0};
+ for(let pass=0;pass<nNodes+raw.length+2 && changed;pass++){
+   changed=false;
+   raw.forEach(e=>{
+     let a=nodes[e.i-1],b=nodes[e.j-1],dx=e.L*Math.cos(e.rad),dy=e.L*Math.sin(e.rad);
+     if(a&&!b){nodes[e.j-1]={x:a.x+dx,y:a.y+dy};changed=true}
+     else if(!a&&b){nodes[e.i-1]={x:b.x-dx,y:b.y-dy};changed=true}
+   });
+ }
+ if(nodes.some(n=>!n)) throw Error("Angle mode: all nodes must form one connected structure so their drawing positions can be reconstructed.");
+ // consistency check for loops
+ raw.forEach(e=>{
+   let a=nodes[e.i-1],b=nodes[e.j-1],ex=a.x+e.L*Math.cos(e.rad),ey=a.y+e.L*Math.sin(e.rad);
+   let tol=Math.max(1,e.L)*1e-6;
+   if(Math.hypot(ex-b.x,ey-b.y)>tol) throw Error("Angle/length data are geometrically inconsistent for the connected loop. Check element lengths and angles.");
+ });
+ return nodes;
+}
+function draw(nodes,els){
+ let cv=$("trussCanvas"),c=cv.getContext("2d"),W=cv.width,H=cv.height,p=70;c.clearRect(0,0,W,H);
+ let xs=nodes.map(n=>n.x),ys=nodes.map(n=>n.y),xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...ys),ymax=Math.max(...ys);
+ let dx=xmax-xmin||1,dy=ymax-ymin||1,sc=Math.min((W-2*p)/dx,(H-2*p)/dy);
+ let X=x=>p+(x-xmin)*sc,Y=y=>H-p-(y-ymin)*sc;
+ c.strokeStyle="#c7ced8";c.lineWidth=1;c.beginPath();c.moveTo(35,H-45);c.lineTo(115,H-45);c.moveTo(35,H-45);c.lineTo(35,H-125);c.stroke();
+ c.fillStyle="#5d6878";c.font="16px Arial";c.fillText("x",120,H-40);c.fillText("y",28,H-132);
+ els.forEach(e=>{let a=nodes[e.i-1],b=nodes[e.j-1];c.strokeStyle="#17365d";c.lineWidth=5;c.beginPath();c.moveTo(X(a.x),Y(a.y));c.lineTo(X(b.x),Y(b.y));c.stroke();
+ let mx=(X(a.x)+X(b.x))/2,my=(Y(a.y)+Y(b.y))/2;c.fillStyle="#b42318";c.font="bold 16px Arial";c.fillText(`e${e.e}  ${e.theta.toFixed(1)}°`,mx+8,my-8)});
+ nodes.forEach((n,k)=>{let x=X(n.x),y=Y(n.y);c.fillStyle="white";c.strokeStyle="#17365d";c.lineWidth=3;c.beginPath();c.arc(x,y,18,0,2*Math.PI);c.fill();c.stroke();
+ c.fillStyle="#17365d";c.font="bold 16px Arial";c.textAlign="center";c.textBaseline="middle";c.fillText(k+1,x,y);c.textAlign="left";c.textBaseline="alphabetic";
+ c.fillStyle="#5d6878";c.font="13px Arial";c.fillText(`(${txt(n.x)}, ${txt(n.y)})`,x+22,y+22)});
+}
+
+function globalMatrixHTML(M,labels,hit){
+ let hitSet=new Set(hit||[]);
+ let s="<table class='matrix'><thead><tr>";
+ labels.forEach((x,c)=>s+=`<th class="dof ${hitSet.has(c)?'assemblyHit':''}">${x}</th>`);
+ s+="<th></th></tr></thead><tbody>";
+ M.forEach((row,r)=>{
+   s+="<tr>";
+   row.forEach((v,c)=>{
+     let nz=Math.abs(v)>1e-8;
+     let cls=(nz?"nonzero ":"")+(hitSet.has(r)&&hitSet.has(c)?"assemblyHit":"");
+     s+=`<td class="${cls}">${txt(v)}</td>`;
+   });
+   s+=`<th class="dof ${hitSet.has(r)?'assemblyHit':''}">${labels[r]}</th></tr>`;
+ });
+ return s+"</tbody></table>";
+}
+function buildTeachingButtons(){
+ let box=$("teachButtons"); if(!box||!window.__trussTeaching)return;
+ box.innerHTML="";
+ window.__trussTeaching.els.forEach(z=>{
+   let b=document.createElement("button");
+   b.type="button"; b.className="teachbtn"; b.textContent="Element "+z.e+" → 6."+z.e;
+   b.addEventListener("click",()=>{
+   selectTeachingElement(z.e);
+   const id="section6-"+z.e;
+   const target=document.getElementById(id);
+   if(target){
+     // Set a real HTML fragment and then use native browser scrolling.
+     location.hash=id;
+     target.scrollIntoView();
+   }
+ });
+   box.appendChild(b);
+ });
+ let clear=document.createElement("button");clear.type="button";clear.className="alt";clear.textContent="Clear Selection";
+ clear.addEventListener("click",clearTeachingSelection);box.appendChild(clear);
+}
+function clearTeachingSelection(){
+ if(!window.__trussTeaching)return;
+ $("global").innerHTML=globalMatrixHTML(window.__trussTeaching.K,window.__trussTeaching.labs,[]);
+ document.querySelectorAll(".teachbtn").forEach(b=>b.classList.remove("active"));
+ document.querySelectorAll("[id^='section6-']").forEach(c=>c.classList.remove("selectedCard"));
+ $("teachInfo").innerHTML="Select an element to display its DOF mapping and highlight its assembly positions in <b>[K]</b>.";
+ draw(window.__trussTeaching.nodes,window.__trussTeaching.els);
+}
+function selectTeachingElement(eNo){
+ let T=window.__trussTeaching,z=T.els.find(x=>x.e===eNo); if(!z)return;
+ let map=[2*(z.i-1),2*(z.i-1)+1,2*(z.j-1),2*(z.j-1)+1];
+ let human=map.map(x=>x+1);
+ let edofs=[`u${z.i}`,`v${z.i}`,`u${z.j}`,`v${z.j}`];
+ $("teachInfo").innerHTML=
+ `<div class="mapbox"><b>Element ${z.e}: Node ${z.i} → Node ${z.j}</b><br>
+ Element DOFs: { ${edofs.join(", ")} }<br>
+ Global DOF numbers: { ${human.join(", ")} }<br><br>
+ Therefore every term of [k]<sup>(${z.e})</sup> is assembled into global rows and columns
+ <b>${human.join(", ")}</b>. The corresponding block is highlighted below.</div>
+ <div class="eq">[k]<sup>(${z.e})</sup> → [K] at DOFs { ${human.join(", ")} }</div>`;
+ $("global").innerHTML=globalMatrixHTML(T.K,T.labs,map);
+ document.querySelectorAll(".teachbtn").forEach((b,i)=>b.classList.toggle("active",i===eNo-1));
+ document.querySelectorAll("[id^='section6-']").forEach(c=>c.classList.remove("selectedCard"));
+ let card=$("section6-"+eNo); if(card)card.classList.add("selectedCard");
+ drawSelected(T.nodes,T.els,eNo);
+}
+function drawSelected(nodes,els,eNo){
+ draw(nodes,els);
+ let cv=$("trussCanvas"),c=cv.getContext("2d"),W=cv.width,H=cv.height,p=70;
+ let xs=nodes.map(n=>n.x),ys=nodes.map(n=>n.y),xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...ys),ymax=Math.max(...ys);
+ let dx=xmax-xmin||1,dy=ymax-ymin||1,sc=Math.min((W-2*p)/dx,(H-2*p)/dy);
+ let X=x=>p+(x-xmin)*sc,Y=y=>H-p-(y-ymin)*sc;
+ let e=els.find(q=>q.e===eNo),a=nodes[e.i-1],b=nodes[e.j-1];
+ c.save();c.strokeStyle="#f0a000";c.lineWidth=11;c.globalAlpha=.7;c.beginPath();c.moveTo(X(a.x),Y(a.y));c.lineTo(X(b.x),Y(b.y));c.stroke();c.restore();
+}
+function calculate(){
+ try{
+ $("error").textContent="";
+ let E=parseFloat($("E").value),nn=parseInt($("nNodes").value),ne=parseInt($("nElems").value),angleMode=$("mode").value==="angles";
+ if(!(E>0)||nn<2||nn>5||ne<1||ne>4)throw Error("Check E, number of nodes and elements.");
+ let ers=$("elemRows").querySelectorAll("tr"),raw=[];
+ for(let e=0;e<ne;e++){let i=parseInt(ers[e].querySelector(".ni").value),j=parseInt(ers[e].querySelector(".nj").value);
+   if(i<1||j<1||i>nn||j>nn||i===j)throw Error(`Invalid connectivity for element ${e+1}.`);
+   let A=parseFloat(ers[e].querySelector(".ae").value);if(!(A>0))throw Error(`Element ${e+1}: area must be positive.`);let z={e:e+1,i,j,A};
+   if(angleMode){z.L=parseFloat(ers[e].querySelector(".len").value);z.theta=parseFloat(ers[e].querySelector(".ang").value);
+     if(!(z.L>0)||!Number.isFinite(z.theta))throw Error(`Invalid L or angle for element ${e+1}.`);z.rad=z.theta*Math.PI/180}
+   raw.push(z);
+ }
+ if(angleMode){
+   // In angle mode the active node count is determined by the connectivity.
+   // This prevents an unused default node (for example node 4 in a 3-node model)
+   // from causing a false "all nodes must be connected" error.
+   let maxNode=0;
+   raw.forEach(z=>{maxNode=Math.max(maxNode,z.i,z.j);});
+   let used=new Set();
+   raw.forEach(z=>{used.add(z.i);used.add(z.j);});
+   for(let n=1;n<=maxNode;n++){
+     if(!used.has(n)) throw Error(`Angle mode: node ${n} is missing from the element connectivity.`);
+   }
+   nn=maxNode;
+   $("nNodes").value=nn;
+ }
+ let nodes;
+ if(angleMode){nodes=deriveAngleNodes(nn,raw)}
+ else{
+   let nrs=$("nodeRows").querySelectorAll("tr");nodes=[];
+   for(let n=0;n<nn;n++){let x=parseFloat(nrs[n].querySelector(".nx").value),y=parseFloat(nrs[n].querySelector(".ny").value);
+     if(!Number.isFinite(x)||!Number.isFinite(y))throw Error(`Invalid coordinate at node ${n+1}.`);nodes.push({x,y})}
+ }
+ let els=[];
+ raw.forEach(z=>{
+   let a=nodes[z.i-1],b=nodes[z.j-1],dx=b.x-a.x,dy=b.y-a.y,L=angleMode?z.L:Math.hypot(dx,dy);
+   if(!(L>0))throw Error(`Element ${z.e} has zero length.`);
+   let theta=angleMode?z.theta:Math.atan2(dy,dx)*180/Math.PI;if(theta<0)theta+=360;
+   let rad=theta*Math.PI/180,l=Math.cos(rad),m=Math.sin(rad),l2=l*l,m2=m*m,lm=l*m,q=z.A*E/L;
+   let B=[[l2,lm,-l2,-lm],[lm,m2,-lm,-m2],[-l2,-lm,l2,lm],[-lm,-m2,lm,m2]],k=B.map(r=>r.map(v=>v*q));
+   els.push({...z,L,theta,l,m,l2,m2,lm,q,B,k,dx,dy});
+ });
+ draw(nodes,els);
+ $("drawNote").textContent=angleMode?"Drawing reconstructed from the entered element lengths, angles and connectivity. The first referenced node is used as the drawing origin.":"Drawing generated directly from the entered node coordinates.";
+ let t="<table><thead><tr><th>Elem.</th><th>i→j</th><th>L</th><th>θ</th><th>l</th><th>m</th><th>l²</th><th>m²</th><th>lm</th><th>Aₑ (m²)</th><th>AₑE/L (N/m)</th></tr></thead><tbody>";
+ els.forEach(z=>t+=`<tr><td>${z.e}</td><td>${z.i}→${z.j}</td><td>${txt(z.L)}</td><td>${txt(z.theta)}°</td><td>${txt(z.l)}</td><td>${txt(z.m)}</td><td>${txt(z.l2)}</td><td>${txt(z.m2)}</td><td>${txt(z.lm)}</td><td>${txt(z.A)}</td><td>${txt(z.q)}</td></tr>`);
+ $("terms").innerHTML=t+"</tbody></table>";
+ $("elements").innerHTML="";
+ els.forEach(z=>{let labs=[`u${z.i}`,`v${z.i}`,`u${z.j}`,`v${z.j}`],d=document.createElement("div");d.className="card elementSection";d.id="section6-"+z.e;
+ d.innerHTML=`<h2>6.${z.e} Element ${z.e}: Node ${z.i} → Node ${z.j}</h2>
+ <div class="eq">Aₑ = ${txt(z.A)} m², &nbsp; θ = ${txt(z.theta)}°, &nbsp; l = ${txt(z.l)}, &nbsp; m = ${txt(z.m)}, &nbsp; l² = ${txt(z.l2)}, &nbsp; m² = ${txt(z.m2)}, &nbsp; lm = ${txt(z.lm)}</div>
+ <p><b>Local axial stiffness matrix</b></p>
+ <div class="eq matrix-eq"><span>[k′]<sup>(${z.e})</sup> = (AE/L)</span><span class="math-matrix"><table><tr><td>1</td><td>−1</td></tr><tr><td>−1</td><td>1</td></tr></table></span></div>
+ <div class="scroll">${matrixHTML([[z.q,-z.q],[-z.q,z.q]],[`u′${z.i}`,`u′${z.j}`],true)}</div>
+ <p><b>Transformation terms</b></p>
+ <div class="eq">l = cos θ = ${txt(z.l)}, &nbsp; m = sin θ = ${txt(z.m)}, &nbsp; l² = ${txt(z.l2)}, &nbsp; m² = ${txt(z.m2)}, &nbsp; lm = ${txt(z.lm)}</div>
+ <p><b>Direction-cosine matrix</b></p><div class="scroll">${matrixHTML(z.B,labs)}</div>
+ <p><b>Element stiffness matrix in global coordinates (N/m)</b> — non-zero terms highlighted</p><div class="eq">[k]<sup>(${z.e})</sup> = (AE/L)[B], &nbsp; AE/L = ${txt(z.q)} N/m</div>
+ <div class="scroll">${matrixHTML(z.k,labs,true)}</div>`;$("elements").appendChild(d)});
+ let nd=2*nn,K=Array.from({length:nd},()=>Array(nd).fill(0));
+ els.forEach(z=>{let map=[2*(z.i-1),2*(z.i-1)+1,2*(z.j-1),2*(z.j-1)+1];for(let r=0;r<4;r++)for(let c=0;c<4;c++)K[map[r]][map[c]]+=z.k[r][c]});
+ let labs=[];for(let n=1;n<=nn;n++){labs.push(`u${n}`);labs.push(`v${n}`)}$("global").innerHTML=globalMatrixHTML(K,labs,[]);
+ window.__trussTeaching={els:els,K:K,labs:labs,nodes:nodes};
+ buildTeachingButtons();
+ $("results").classList.remove("hidden");$("results").scrollIntoView({behavior:"smooth",block:"start"});
+ }catch(e){$("error").textContent=e.message||String(e);$("results").classList.add("hidden")}
+}
+function example(){
+ $("E").value=200000000000;$("nNodes").value=4;$("nElems").value=3;
+ if($("mode").value==="coords"){
+   buildNodes();buildElems();let p=[[4,4],[0,0],[4,0],[7,0]],nr=$("nodeRows").querySelectorAll("tr");
+   p.forEach((v,i)=>{nr[i].querySelector(".nx").value=v[0];nr[i].querySelector(".ny").value=v[1]});
+   let q=[[2,1],[3,1],[1,4]],er=$("elemRows").querySelectorAll("tr");q.forEach((v,i)=>{er[i].querySelector(".ni").value=v[0];er[i].querySelector(".nj").value=v[1]});
+ }else{
+   buildElems();let q=[[2,1,Math.sqrt(32),45],[3,1,4,90],[1,4,5,-53.130102]],er=$("elemRows").querySelectorAll("tr");
+   q.forEach((v,i)=>{er[i].querySelector(".ni").value=v[0];er[i].querySelector(".nj").value=v[1];er[i].querySelector(".len").value=v[2];er[i].querySelector(".ang").value=v[3]});
+ }
+ calculate();
+}
+$("mode").addEventListener("change",updateMode);$("nNodes").addEventListener("change",buildNodes);$("nElems").addEventListener("change",buildElems);
+$("calcBtn").addEventListener("click",calculate);$("exampleBtn").addEventListener("click",example);
+buildNodes();buildElems();updateMode();
+})();
+</script>
+<a class="fem-bottom-home" href="index.html">⌂ FEM Home</a>
+<div class="fem-module-nav"><a href="bar.html">← 1D Bar</a><a href="beam2d.html">2D Beam →</a></div><a class="fem-top" href="#" aria-label="Back to top">↑</a><script id="lesson-tabs-js">document.querySelectorAll('.lesson-tab').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.lesson-tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.lesson-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('panel-'+b.dataset.panel).classList.add('active');var w=document.getElementById('calculator-workspace');w.style.display=b.dataset.panel==='calculator'?'block':'none';if(b.dataset.panel==='calculator'){setTimeout(function(){w.scrollIntoView({behavior:'smooth',block:'start'});},50);}});});</script></body></html>

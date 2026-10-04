@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2D Beam FEM Learning Module</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;background:#f4f6f9;color:#182235}
+header{background:#17365d;color:#fff;padding:20px 28px}main{max-width:1450px;margin:auto;padding:20px}
+.card{background:#fff;border:1px solid #d7dde6;border-radius:10px;padding:18px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+label{display:block;font-weight:bold;font-size:13px;margin-bottom:5px}
+input{width:100%;box-sizing:border-box;padding:8px;border:1px solid #b8c2d0;border-radius:6px}
+button{padding:10px 16px;border:0;border-radius:7px;background:#1f5fae;color:#fff;font-weight:bold;cursor:pointer;margin:4px}
+button.alt{background:#667085}table{border-collapse:collapse;max-width:100%}
+th,td{border:1px solid #ccd3dd;padding:6px 8px;text-align:center;white-space:nowrap}th{background:#eef2f7}
+.scroll{overflow:auto}.error{color:#b42318;font-weight:bold;margin-top:10px}.eq{text-align:center;font-family:"Times New Roman",serif;font-size:18px;margin:12px}
+.small{font-size:13px;color:#5d6878}.hidden{display:none}.matrix td{min-width:88px}.dof{font-weight:bold;background:#f8fafc}
+.nonzero{background:#fff2a8;font-weight:bold}.assemblyHit{background:#ffd966!important;font-weight:bold;box-shadow:inset 0 0 0 2px #c08a00}
+.selectedCard{outline:4px solid #ffd966}.elementSection{scroll-margin-top:16px}
+#beamCanvas{width:100%;height:330px;border:1px solid #ccd3dd;border-radius:8px;background:#fff}
+.teachbar{display:flex;flex-wrap:wrap;gap:6px}.mapbox{background:#eef4fb;border-left:5px solid #17365d;padding:12px;margin:10px 0}
+@media(max-width:800px){.grid{grid-template-columns:1fr 1fr}}@media(max-width:520px){.grid{grid-template-columns:1fr}}
+
+.fem-course-header{display:flex;align-items:center;gap:22px}.fem-course-logo{width:170px;height:96px;object-fit:contain;background:#fff;border-radius:8px;padding:5px;box-sizing:border-box}.fem-course-text{min-width:0}.fem-course-kicker{font-size:15px;font-weight:700;letter-spacing:.04em;color:#dce7f5;margin-bottom:4px}.fem-course-header h1{margin:0 0 5px}.fem-course-subtitle{color:#dce7f5}.fem-site-brand{font-weight:700;margin-right:10px;white-space:nowrap}@media(max-width:620px){.fem-course-header{align-items:flex-start;gap:12px}.fem-course-logo{width:115px;height:68px}.fem-course-kicker{font-size:12px}.fem-course-header h1{font-size:24px}}
+.fem-affiliation{font-size:14px;margin-top:5px;color:#dce7f5}.fem-author{font-size:14px;font-weight:700;margin-top:3px;color:#fff}
+/* Proper mathematical matrix notation */
+.matrix-eq{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:10px 0;font:21px "Times New Roman",serif}
+.math-matrix{position:relative;display:inline-block;padding:2px 10px;vertical-align:middle}
+.math-matrix:before,.math-matrix:after{content:"";position:absolute;top:0;bottom:0;width:7px;border-top:2px solid currentColor;border-bottom:2px solid currentColor}
+.math-matrix:before{left:0;border-left:2px solid currentColor}.math-matrix:after{right:0;border-right:2px solid currentColor}
+.math-matrix table{border-collapse:collapse;margin:0!important;width:auto!important;background:transparent!important;box-shadow:none!important}
+.math-matrix td{border:0!important;padding:2px 9px!important;text-align:center!important;min-width:auto!important;background:transparent!important;font:inherit!important}
+.math-frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05}.math-frac .num{border-bottom:1.6px solid currentColor;padding:0 5px 3px}.math-frac .den{padding:3px 5px 0}.display-eq{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0;font:21px "Times New Roman",serif}</style>
+
+<style id="immersive-ui">
+:root{--navy:#0b2342;--blue:#17365d;--accent:#2f75b5;--ink:#182235;--muted:#667085;--paper:#f4f7fb;--line:#d7e0eb;--gold:#f2b134}
+html{scroll-behavior:smooth}body{background:radial-gradient(circle at 15% 0,#edf5ff 0,transparent 30%),#f4f6f9}
+.fem-site-nav{backdrop-filter:blur(10px);background:rgba(11,35,66,.96)!important;border-bottom:1px solid rgba(255,255,255,.12)}
+.fem-site-nav a{transition:.2s ease}.fem-site-nav a:hover{transform:translateY(-1px)}
+.fem-quick-select{margin-left:auto;background:#fff;color:#17365d;border:0;border-radius:7px;padding:8px 10px;font-weight:700;max-width:180px}
+header{background:linear-gradient(125deg,#0b2342 0%,#17365d 58%,#2f75b5 100%)!important;position:relative;overflow:hidden}
+header:after{content:"";position:absolute;width:360px;height:360px;border:1px solid rgba(255,255,255,.12);border-radius:50%;right:-90px;top:-210px;box-shadow:0 0 0 45px rgba(255,255,255,.035),0 0 0 90px rgba(255,255,255,.025)}
+.fem-course-header{position:relative;z-index:1}.fem-course-logo{box-shadow:0 10px 28px rgba(0,0,0,.2)}
+.fem-course-kicker{color:#bcd9f7!important}.fem-affiliation{line-height:1.45}.fem-author{margin-top:7px!important}
+.card,.module-card{box-shadow:0 5px 18px rgba(15,39,71,.06)!important;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}.card:hover{border-color:#b9cce1}.module-card:hover{transform:translateY(-5px)!important;box-shadow:0 14px 30px rgba(15,39,71,.13)!important}
+.module-card span{display:inline-flex;align-items:center;gap:5px}.module-card span:after{content:"›";font-size:20px;line-height:1}.module-card span{font-size:0}.module-card span:before{content:"Open module";font-size:14px}
+.fem-pic{transition:transform .25s ease}.module-card:hover .fem-pic{transform:scale(1.02)}
+button{transition:transform .15s ease,box-shadow .15s ease}button:hover{transform:translateY(-1px);box-shadow:0 5px 12px rgba(31,95,174,.22)}
+.fem-context{max-width:1450px;margin:14px auto 0;padding:0 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#667085;font:600 13px Arial,sans-serif}.fem-context a{color:#1f5fae;text-decoration:none}.fem-context strong{color:#17365d}
+.fem-module-nav{max-width:1450px;margin:8px auto 34px;padding:0 20px;display:flex;justify-content:space-between;gap:12px}.fem-module-nav a{flex:1;max-width:320px;border:1px solid #cbd8e7;background:#fff;color:#17365d;text-decoration:none;border-radius:10px;padding:12px 15px;font:700 14px Arial,sans-serif;box-shadow:0 3px 10px rgba(15,39,71,.05)}.fem-module-nav a:last-child{text-align:right}.fem-module-nav a:hover{border-color:#6f9bc8;box-shadow:0 7px 18px rgba(15,39,71,.1)}
+.fem-top{position:fixed;right:20px;bottom:20px;width:42px;height:42px;border-radius:50%;background:#17365d;color:#fff;text-decoration:none;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.22);z-index:90;font:bold 20px Arial}
+.home-badges{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:18px auto 30px}.home-badge{background:#fff;border:1px solid #d7e0eb;border-radius:999px;padding:8px 13px;color:#17365d;font-weight:700;font-size:13px;box-shadow:0 3px 10px rgba(15,39,71,.05)}
+@media(max-width:800px){.fem-quick-select{width:100%;max-width:none;margin-left:0}.fem-context{align-items:flex-start;flex-direction:column}.fem-module-nav{flex-direction:column}.fem-module-nav a{max-width:none}.fem-module-nav a:last-child{text-align:left}}
+</style><script src="course-access.js"></script></head>
+<body>
+<style id="fem-site-nav-style">
+.fem-site-nav{background:#0f2747;color:#fff;padding:10px 18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:sticky;top:0;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,.16);font-family:Arial,sans-serif}
+.fem-site-brand{font-weight:700;margin-right:10px;white-space:nowrap}.fem-site-nav a{color:#fff;text-decoration:none;padding:8px 11px;border-radius:6px;font-size:14px;font-weight:600}.fem-site-nav a:hover{background:#285582}.fem-site-nav a.active{background:#fff;color:#17365d}.fem-bottom-home{display:block;width:max-content;margin:24px auto 36px;padding:10px 18px;background:#17365d;color:#fff!important;text-decoration:none;border-radius:7px;font:bold 14px Arial,sans-serif}
+@media(max-width:700px){.fem-site-nav{position:relative}.fem-site-brand{width:100%}.fem-site-nav a{font-size:13px;padding:7px 9px}}
+.fem-affiliation{font-size:14px;margin-top:5px;color:#dce7f5}.fem-author{font-size:14px;font-weight:700;margin-top:3px;color:#fff}</style><nav class="fem-site-nav"><span class="fem-site-brand">Interactive FEM Learning Suite</span><a href="index.html">Home</a><a href="bar.html">1D Bar</a><a href="truss2d.html">2D Truss</a><a href="beam2d.html" class="active">2D Beam</a><a href="frame2d.html">2D Frame</a><a href="cst.html">CST</a><a href="truss3d.html">3D Truss</a><a href="beam3d.html">3D Beam</a><select class="fem-quick-select" aria-label="Jump to FEM module" onchange="if(this.value) location.href=this.value"><option value="index.html">Home</option><option value="bar.html">1D Bar</option><option value="truss2d.html">2D Truss</option><option value="beam2d.html" selected>2D Beam</option><option value="frame2d.html">2D Frame</option><option value="cst.html">CST</option><option value="truss3d.html">3D Truss</option><option value="beam3d.html">3D Beam</option></select></nav>
+<header><div class="fem-course-header"><img src="aerospace-logo.jpg" class="fem-course-logo" alt="School of Aerospace Engineering"><div class="fem-course-text"><div class="fem-course-kicker">ESA 321 – FINITE ELEMENT METHOD</div><h1>2D Beam FEM Learning Module</h1><div class="fem-course-subtitle">Euler–Bernoulli beam • up to 4 elements • element stiffness • DOF mapping • global assembly</div><div class="fem-affiliation">School of Aerospace Engineering, Universiti Sains Malaysia, Tuanku Syed Sirajuddin Engineering Campus</div><div class="fem-author">Dr. Norizham Abdul Razak</div></div></div></header><div class="fem-context"><div><a href="index.html">ESA 321</a> &nbsp;›&nbsp; <strong>2D Beam FEM Learning Module</strong></div><div>Use the module selector above to jump between element types.</div></div>
+<style id="element-learning-ui">
+.learning-shell{max-width:1450px;margin:18px auto 0;padding:0 20px}.learning-intro{background:linear-gradient(135deg,#fff,#edf5ff);border:1px solid #cdddec;border-radius:14px;padding:20px;box-shadow:0 8px 24px rgba(15,39,71,.08)}.learning-path{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}.learning-step{background:#fff;border:1px solid #cbd8e7;border-radius:999px;padding:7px 10px;color:#17365d;font-weight:700;font-size:12px}.lesson-tabs{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 12px}.lesson-tab{background:#e9f0f8;color:#17365d;border:1px solid #c8d6e6;box-shadow:none}.lesson-tab.active{background:#17365d;color:#fff}.lesson-panel{display:none}.lesson-panel.active{display:block}.lesson-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.concept-card,.step-card{background:#fff;border:1px solid #d7e0eb;border-radius:12px;padding:16px;box-shadow:0 4px 14px rgba(15,39,71,.05);margin-bottom:14px}.concept-card h3,.step-card h2{margin-top:0;color:#17365d}.concept-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#17365d;color:#fff;font-weight:800;margin-bottom:10px}.formula-box{background:#f8fbff;border:1px solid #cbdced;border-radius:10px;padding:15px;text-align:center;font:20px 'Times New Roman',serif;margin:10px 0;overflow:auto}.pdf-frame{width:100%;height:720px;border:1px solid #cbd8e7;border-radius:10px;background:#fff}.worked-diagram{margin:14px 0;padding:14px;border:1px solid #cbd5e1;border-radius:14px;background:#f8fafc;overflow:auto}.worked-diagram svg{display:block;width:100%;min-width:620px;height:auto}.result-box{background:#eef7ee;border:1px solid #b9d9c0;border-radius:12px;padding:15px}.lecture-link{display:inline-block;margin-top:10px;color:#1f5fae;font-weight:700;text-decoration:none}.practice-box{background:#fff;border:1px solid #d7e0eb;border-radius:12px;padding:18px}.math-vector td{padding:2px 12px!important}.formula-box .math-matrix table{font-size:18px}.formula-box .math-matrix{margin:0 8px}.display-eq{font:20px 'Times New Roman',serif;text-align:center;margin:10px 0}.small-note{font-size:13px;color:#667085}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:900px){.lesson-grid{grid-template-columns:1fr 1fr}.pdf-frame{height:560px}.two-col{grid-template-columns:1fr}}@media(max-width:600px){.lesson-grid{grid-template-columns:1fr}.pdf-frame{height:480px}.learning-shell{padding:0 12px}}
+</style><section class="learning-shell" id="learn"><div class="learning-intro"><h2>Learn the 2D Beam Element</h2><p>This module follows ESA 321 Lecture 3: beam behaviour, nodal transverse displacement and rotation, sign convention, element stiffness, assembly, boundary conditions, equivalent nodal loading and solution.</p><div class="learning-path"><span class="learning-step">1 · Behaviour</span><span class="learning-step">2 · DOFs</span><span class="learning-step">3 · Stiffness</span><span class="learning-step">4 · Assembly</span><span class="learning-step">5 · Boundary conditions</span><span class="learning-step">6 · Solve & reactions</span></div></div>
+<div class="lesson-tabs"><button class="lesson-tab active" data-panel="concepts">Concepts</button><button class="lesson-tab" data-panel="notes">Lecture Notes</button><button class="lesson-tab" data-panel="worked">Worked Example</button><button class="lesson-tab" data-panel="practice">Practice</button><button class="lesson-tab" data-panel="calculator">Interactive FEM</button></div>
+<div class="lesson-panel active" id="panel-concepts"><div class="lesson-grid"><div class="concept-card"><div class="concept-num">1</div><h3>Beam behaviour</h3><p>A beam supports transverse loading primarily through bending. Bending deformation is represented by transverse displacement and rotation.</p></div><div class="concept-card"><div class="concept-num">2</div><h3>Two DOFs per node</h3><div class="formula-box">{d}<sup>(e)</sup> = <span class="math-matrix math-vector"><table><tr><td>v₁</td></tr><tr><td>θ₁</td></tr><tr><td>v₂</td></tr><tr><td>θ₂</td></tr></table></span></div></div><div class="concept-card"><div class="concept-num">3</div><h3>Sign convention</h3><p>Positive moments and rotations are counter-clockwise; positive transverse forces and displacements act in +y.</p></div><div class="concept-card"><div class="concept-num">4</div><h3>Element stiffness</h3><div class="formula-box matrix-eq"><span>[k]<sup>(e)</sup> = EI/L³</span><span class="math-matrix"><table><tr><td>12</td><td>6L</td><td>−12</td><td>6L</td></tr><tr><td>6L</td><td>4L²</td><td>−6L</td><td>2L²</td></tr><tr><td>−12</td><td>−6L</td><td>12</td><td>−6L</td></tr><tr><td>6L</td><td>2L²</td><td>−6L</td><td>4L²</td></tr></table></span></div></div><div class="concept-card"><div class="concept-num">5</div><h3>Assembly</h3><p>Map (vᵢ, θᵢ, vⱼ, θⱼ) into the global displacement vector and add overlapping stiffness terms.</p></div><div class="concept-card"><div class="concept-num">6</div><h3>Distributed loads</h3><p>Distributed loading is represented by equivalent nodal forces and moments before solving the FEM equations.</p></div></div></div>
+<div class="lesson-panel" id="panel-notes"><div class="card"><h2>ESA 321 Lecture 3 · Beam & Frame Element</h2><iframe class="pdf-frame" src="ESA321_Beam_Frame_Lecture_Notes.pdf#view=FitH"></iframe><a class="lecture-link" href="ESA321_Beam_Frame_Lecture_Notes.pdf" target="_blank">Open lecture notes in a new tab ↗</a></div></div>
+<div class="lesson-panel" id="panel-worked"><div class="step-card"><h2>Worked Example · Two-Element Fixed–Fixed Beam</h2><p>A beam of total length 2L is divided into two equal elements. Nodes 1 and 3 are fixed. At the centre node, a downward force P and counter-clockwise moment M are applied. Determine v₂, θ₂ and the reactions.</p><div class="worked-diagram"><svg viewBox="0 0 900 300"><line x1="150" y1="145" x2="750" y2="145" stroke="#2563eb" stroke-width="12"/><line x1="135" y1="75" x2="135" y2="215" stroke="#334155" stroke-width="9"/><line x1="765" y1="75" x2="765" y2="215" stroke="#334155" stroke-width="9"/><circle cx="150" cy="145" r="11" fill="white" stroke="#111827" stroke-width="3"/><circle cx="450" cy="145" r="11" fill="white" stroke="#111827" stroke-width="3"/><circle cx="750" cy="145" r="11" fill="white" stroke="#111827" stroke-width="3"/><line x1="450" y1="45" x2="450" y2="120" stroke="#b91c1c" stroke-width="5"/><polygon points="450,135 438,112 462,112" fill="#b91c1c"/><path d="M500 110 A55 55 0 1 1 492 188" fill="none" stroke="#7c3aed" stroke-width="5"/><polygon points="488,188 506,179 502,201" fill="#7c3aed"/><g font-family="Arial" font-size="20"><text x="140" y="175">1</text><text x="440" y="175">2</text><text x="740" y="175">3</text><text x="275" y="125">Element 1</text><text x="575" y="125">Element 2</text><text x="295" y="205">L</text><text x="595" y="205">L</text><text x="462" y="70" fill="#b91c1c">P</text><text x="525" y="100" fill="#7c3aed">M</text><text x="350" y="250">constant E, I</text></g></svg></div></div>
+<div class="step-card"><h2>Step 1 · Global DOFs</h2><div class="formula-box">{d} = <span class="math-matrix math-vector"><table><tr><td>v₁</td></tr><tr><td>θ₁</td></tr><tr><td>v₂</td></tr><tr><td>θ₂</td></tr><tr><td>v₃</td></tr><tr><td>θ₃</td></tr></table></span></div></div>
+<div class="step-card"><h2>Step 2 · Element stiffness matrix</h2><div class="formula-box matrix-eq"><span>[k]<sup>(e)</sup> = EI/L³</span><span class="math-matrix"><table><tr><td>12</td><td>6L</td><td>−12</td><td>6L</td></tr><tr><td>6L</td><td>4L²</td><td>−6L</td><td>2L²</td></tr><tr><td>−12</td><td>−6L</td><td>12</td><td>−6L</td></tr><tr><td>6L</td><td>2L²</td><td>−6L</td><td>4L²</td></tr></table></span></div><p>Element 1 maps to (v₁, θ₁, v₂, θ₂); Element 2 maps to (v₂, θ₂, v₃, θ₃).</p></div>
+<div class="step-card"><h2>Step 3 · Assemble the global stiffness matrix</h2><div class="formula-box matrix-eq"><span>[K] = EI/L³</span><span class="math-matrix"><table><tr><td>12</td><td>6L</td><td>−12</td><td>6L</td><td>0</td><td>0</td></tr><tr><td>6L</td><td>4L²</td><td>−6L</td><td>2L²</td><td>0</td><td>0</td></tr><tr><td>−12</td><td>−6L</td><td>24</td><td>0</td><td>−12</td><td>6L</td></tr><tr><td>6L</td><td>2L²</td><td>0</td><td>8L²</td><td>−6L</td><td>2L²</td></tr><tr><td>0</td><td>0</td><td>−12</td><td>−6L</td><td>12</td><td>−6L</td></tr><tr><td>0</td><td>0</td><td>6L</td><td>2L²</td><td>−6L</td><td>4L²</td></tr></table></span></div></div>
+<div class="step-card"><h2>Step 4 · Global equilibrium equation</h2><div class="formula-box matrix-eq"><span>EI/L³</span><span class="math-matrix"><table><tr><td>12</td><td>6L</td><td>−12</td><td>6L</td><td>0</td><td>0</td></tr><tr><td>6L</td><td>4L²</td><td>−6L</td><td>2L²</td><td>0</td><td>0</td></tr><tr><td>−12</td><td>−6L</td><td>24</td><td>0</td><td>−12</td><td>6L</td></tr><tr><td>6L</td><td>2L²</td><td>0</td><td>8L²</td><td>−6L</td><td>2L²</td></tr><tr><td>0</td><td>0</td><td>−12</td><td>−6L</td><td>12</td><td>−6L</td></tr><tr><td>0</td><td>0</td><td>6L</td><td>2L²</td><td>−6L</td><td>4L²</td></tr></table></span><span class="math-matrix math-vector"><table><tr><td>v₁</td></tr><tr><td>θ₁</td></tr><tr><td>v₂</td></tr><tr><td>θ₂</td></tr><tr><td>v₃</td></tr><tr><td>θ₃</td></tr></table></span><span>=</span><span class="math-matrix math-vector"><table><tr><td>F₁y</td></tr><tr><td>M₁</td></tr><tr><td>−P</td></tr><tr><td>M</td></tr><tr><td>F₃y</td></tr><tr><td>M₃</td></tr></table></span></div></div>
+<div class="step-card"><h2>Step 5 · Apply boundary conditions</h2><div class="display-eq">v₁ = θ₁ = v₃ = θ₃ = 0</div><p>The only unknown displacement DOFs are v₂ and θ₂.</p></div>
+<div class="step-card"><h2>Step 6 · Reduced system</h2><div class="formula-box matrix-eq"><span>EI/L³</span><span class="math-matrix"><table><tr><td>24</td><td>0</td></tr><tr><td>0</td><td>8L²</td></tr></table></span><span class="math-matrix math-vector"><table><tr><td>v₂</td></tr><tr><td>θ₂</td></tr></table></span><span>=</span><span class="math-matrix math-vector"><table><tr><td>−P</td></tr><tr><td>M</td></tr></table></span></div></div>
+<div class="step-card"><h2>Step 7 · Solve the centre displacement and rotation</h2><div class="formula-box matrix-eq"><span class="math-matrix math-vector"><table><tr><td>v₂</td></tr><tr><td>θ₂</td></tr></table></span><span>= L/(24EI)</span><span class="math-matrix math-vector"><table><tr><td>−PL²</td></tr><tr><td>3M</td></tr></table></span></div><div class="result-box"><div class="display-eq">v₂ = −PL³/(24EI)</div><div class="display-eq">θ₂ = ML/(8EI)</div></div></div>
+<div class="step-card"><h2>Step 8 · Recover the complete displacement vector</h2><div class="formula-box">{d} = <span class="math-matrix math-vector"><table><tr><td>0</td></tr><tr><td>0</td></tr><tr><td>−PL³/(24EI)</td></tr><tr><td>ML/(8EI)</td></tr><tr><td>0</td></tr><tr><td>0</td></tr></table></span></div></div>
+<div class="step-card"><h2>Step 9 · Calculate reactions</h2><p>Use the original global equation {F}=[K]{d}.</p><div class="formula-box">{F} = <span class="math-matrix math-vector"><table><tr><td>P/2 + 3M/(4L)</td></tr><tr><td>PL/4 + M/4</td></tr><tr><td>−P</td></tr><tr><td>M</td></tr><tr><td>P/2 − 3M/(4L)</td></tr><tr><td>−PL/4 + M/4</td></tr></table></span></div></div>
+<div class="step-card"><h2>Step 10 · Final results</h2><div class="result-box"><div class="display-eq">v₂ = −PL³/(24EI) &nbsp;&nbsp;&nbsp; θ₂ = ML/(8EI)</div><div class="display-eq">F₁y = P/2 + 3M/(4L), &nbsp; F₃y = P/2 − 3M/(4L)</div><div class="display-eq">M₁ = PL/4 + M/4, &nbsp; M₃ = −PL/4 + M/4</div></div></div></div>
+<div class="lesson-panel" id="panel-practice"><div class="practice-box"><h2>Practice</h2><p>Repeat the two-element beam solution for (a) P only with M=0 and (b) M only with P=0. Then verify symmetry, centre displacement/rotation and the reactions.</p><p>Also practise converting a uniformly distributed load into equivalent nodal forces and moments before assembly.</p></div></div>
+<div class="lesson-panel" id="panel-calculator"><div class="card"><h2>Interactive FEM Workspace</h2><p>Define the beam geometry and vary each element's second moment of area Iₑ. Use the workspace below to inspect element and global stiffness matrices.</p></div></div></section>
+<main id="calculator-workspace" style="display:none">
+<div class="card">
+<h2>1. Beam Model</h2>
+<p class="small">This page uses the standard 2-node Euler–Bernoulli bending element. Each node has two DOFs: transverse displacement v and rotation θ. Cross-sectional area Aₑ is stored per element for section definition; in this pure Euler–Bernoulli bending formulation the stiffness depends on E, Iₑ and L, so Aₑ does not change the bending stiffness.</p>
+<div class="grid">
+<div><label>Young's modulus, E (N/m²)</label><input id="E" type="number" step="any" value="200000000000"></div>
+
+<div><label>Number of nodes</label><input id="nn" type="number" min="2" max="5" value="3"></div>
+<div><label>Number of elements</label><input id="ne" type="number" min="1" max="4" value="2"></div>
+</div>
+</div>
+
+<div class="card">
+<h2>2. Node Positions</h2>
+<p class="small">Enter the x-coordinate of each node along the beam axis.</p>
+<div class="scroll"><table><thead><tr><th>Node</th><th>x (m)</th></tr></thead><tbody id="nodeRows"></tbody></table></div>
+</div>
+
+<div class="card">
+<h2>3. Element Connectivity</h2>
+<div class="scroll"><table><thead><tr><th>Element</th><th>Node i</th><th>Node j</th><th>Area Aₑ (m²)</th><th>Second moment Iₑ (m⁴)</th></tr></thead><tbody id="elemRows"></tbody></table></div>
+<br><button id="calc">Calculate & Draw</button><button id="example" class="alt">Load Example</button>
+<div id="err" class="error"></div>
+</div>
+
+<div id="results" class="hidden">
+<div class="card"><h2>4. Beam Structure</h2><canvas id="beamCanvas" width="1200" height="330"></canvas>
+<p class="small">The beam is drawn along its physical x-coordinate. Element numbers are shown above the members and node numbers below.</p></div>
+
+<div class="card"><h2>5. Element Formulation</h2>
+<div class="eq matrix-eq"><span>[k]<sup>(e)</sup> = <i>EI</i>/<i>L</i>³</span><span class="math-matrix"><table><tr><td>12</td><td>6L</td><td>−12</td><td>6L</td></tr><tr><td>6L</td><td>4L²</td><td>−6L</td><td>2L²</td></tr><tr><td>−12</td><td>−6L</td><td>12</td><td>−6L</td></tr><tr><td>6L</td><td>2L²</td><td>−6L</td><td>4L²</td></tr></table></span></div>
+<p class="small">Element DOF order: {vᵢ, θᵢ, vⱼ, θⱼ}. Non-zero stiffness terms are highlighted.</p>
+</div>
+
+<div class="card"><h2>6. Interactive Assembly Teaching Mode</h2>
+<p class="small">Select an element to highlight its four DOFs and the corresponding positions in the assembled global stiffness matrix.</p>
+<div id="teachButtons" class="teachbar"></div><div id="teachInfo" class="mapbox">Calculate the model, then select an element.</div>
+</div>
+
+<div id="elementSections"></div>
+
+<div class="card"><h2>8. Assembled Global Stiffness Matrix [K]</h2>
+<p class="small">Global DOF order: v₁, θ₁, v₂, θ₂, ... . Boundary conditions are not yet applied.</p>
+<div id="global" class="scroll"></div></div>
+</div>
+</main>
+<script>
+(function(){
+"use strict";const $=id=>document.getElementById(id);
+function clean(x){return Math.abs(x)<1e-9?0:x}
+function fmt(x){x=clean(x);let a=Math.abs(x);return(a!==0&&(a>=1e6||a<1e-3))?x.toExponential(4):x.toFixed(4)}
+function nodes(){let n=Math.max(2,Math.min(5,parseInt($("nn").value)||2)),old=[];
+$("nodeRows").querySelectorAll("input").forEach(q=>old.push(q.value));$("nodeRows").innerHTML="";
+for(let i=0;i<n;i++)$("nodeRows").insertAdjacentHTML("beforeend",`<tr><td><b>${i+1}</b></td><td><input class="x" type="number" step="any" value="${old[i]??i}"></td></tr>`)}
+function elems(){let n=Math.max(1,Math.min(4,parseInt($("ne").value)||1)),old=[];
+$("elemRows").querySelectorAll("tr").forEach(r=>{let q=r.querySelectorAll("input");old.push([q[0].value,q[1].value,q[2]?.value||0.005,q[3]?.value||8.333e-6])});$("elemRows").innerHTML="";
+for(let e=0;e<n;e++){let v=old[e]||[e+1,e+2,0.005,8.333e-6];$("elemRows").insertAdjacentHTML("beforeend",`<tr><td><b>${e+1}</b></td><td><input class="ni" type="number" value="${v[0]}"></td><td><input class="nj" type="number" value="${v[1]}"></td><td><input class="ae" type="number" step="any" value="${v[2]}"></td><td><input class="ie" type="number" step="any" value="${v[3]}"></td></tr>`) }}
+function matrix(M,labs,hit=[]){let H=new Set(hit),s="<table class='matrix'><thead><tr>";labs.forEach((x,c)=>s+=`<th class="dof ${H.has(c)?'assemblyHit':''}">${x}</th>`);s+="<th></th></tr></thead><tbody>";
+M.forEach((r,i)=>{s+="<tr>";r.forEach((v,j)=>s+=`<td class="${Math.abs(v)>1e-9?'nonzero ':''}${H.has(i)&&H.has(j)?'assemblyHit':''}">${fmt(v)}</td>`);s+=`<th class="dof ${H.has(i)?'assemblyHit':''}">${labs[i]}</th></tr>`});return s+"</tbody></table>"}
+function draw(ns,es,sel=0){let cv=$("beamCanvas"),c=cv.getContext("2d"),W=cv.width,H=cv.height,p=90;c.clearRect(0,0,W,H);
+let xmin=Math.min(...ns),xmax=Math.max(...ns),dx=xmax-xmin||1,X=x=>p+(x-xmin)*(W-2*p)/dx,y=H/2;
+c.strokeStyle="#17365d";c.lineWidth=7;c.lineCap="round";
+es.forEach(e=>{c.strokeStyle=e.e===sel?"#f0a000":"#17365d";c.lineWidth=e.e===sel?12:7;c.beginPath();c.moveTo(X(ns[e.i-1]),y);c.lineTo(X(ns[e.j-1]),y);c.stroke();
+let mx=(X(ns[e.i-1])+X(ns[e.j-1]))/2;c.fillStyle="#b42318";c.font="bold 17px Arial";c.textAlign="center";c.fillText(`Element ${e.e}   L=${fmt(e.L)} m`,mx,y-28)});
+ns.forEach((x,i)=>{let xx=X(x);c.fillStyle="white";c.strokeStyle="#17365d";c.lineWidth=3;c.beginPath();c.arc(xx,y,18,0,2*Math.PI);c.fill();c.stroke();c.fillStyle="#17365d";c.font="bold 16px Arial";c.fillText(i+1,xx,y+5);c.fillStyle="#5d6878";c.font="13px Arial";c.fillText(`x=${fmt(x)}`,xx,y+45)});
+c.textAlign="left";c.strokeStyle="#8b95a5";c.lineWidth=2;c.beginPath();c.moveTo(45,y+90);c.lineTo(125,y+90);c.stroke();c.fillStyle="#5d6878";c.fillText("+x",132,y+95)}
+function selectEl(no){let T=window.BEAM,z=T.es.find(e=>e.e===no),map=[2*(z.i-1),2*(z.i-1)+1,2*(z.j-1),2*(z.j-1)+1],h=map.map(x=>x+1);
+$("teachInfo").innerHTML=`<b>Element ${z.e}: Node ${z.i} → Node ${z.j}</b><br>Element DOFs: {v${z.i}, θ${z.i}, v${z.j}, θ${z.j}}<br>Global DOF numbers: {${h.join(", ")}}<br><br>The 4×4 element matrix is assembled into global rows and columns <b>${h.join(", ")}</b>.`;
+$("global").innerHTML=matrix(T.K,T.labs,map);document.querySelectorAll(".elementSection").forEach(x=>x.classList.remove("selectedCard"));let target=$("sec7-"+no);if(target)target.classList.add("selectedCard");draw(T.ns,T.es,no)}
+function calc(){try{$("err").textContent="";let E=parseFloat($("E").value),nn=parseInt($("nn").value),ne=parseInt($("ne").value);
+if(!(E>0)||nn<2||nn>5||ne<1||ne>4)throw Error("Check E, node count and element count.");
+let ns=[],nr=$("nodeRows").querySelectorAll("tr");for(let n=0;n<nn;n++){let x=parseFloat(nr[n].querySelector(".x").value);if(!Number.isFinite(x))throw Error(`Invalid x-coordinate at node ${n+1}.`);ns.push(x)}
+let es=[],er=$("elemRows").querySelectorAll("tr");for(let e=0;e<ne;e++){let i=parseInt(er[e].querySelector(".ni").value),j=parseInt(er[e].querySelector(".nj").value);if(i<1||j<1||i>nn||j>nn||i===j)throw Error(`Invalid connectivity for element ${e+1}.`);
+let L=Math.abs(ns[j-1]-ns[i-1]);if(!(L>0))throw Error(`Element ${e+1} has zero length.`);let A=+er[e].querySelector(".ae").value,I=+er[e].querySelector(".ie").value;if(!(A>0&&I>0))throw Error(`Element ${e+1}: A and I must be positive.`);let q=E*I/(L*L*L);
+let B=[[12,6*L,-12,6*L],[6*L,4*L*L,-6*L,2*L*L],[-12,-6*L,12,-6*L],[6*L,2*L*L,-6*L,4*L*L]],k=B.map(r=>r.map(v=>q*v));es.push({e:e+1,i,j,L,A,I,q,B,k})}
+draw(ns,es);let area=$("elementSections");area.innerHTML="";
+es.forEach(z=>{let labs=[`v${z.i}`,`θ${z.i}`,`v${z.j}`,`θ${z.j}`],d=document.createElement("div");d.className="card elementSection";d.id="sec7-"+z.e;
+d.innerHTML=`<h2>7.${z.e} Element ${z.e}: Node ${z.i} → Node ${z.j}</h2>
+<div class="eq">L = ${fmt(z.L)} m, &nbsp; Aₑ = ${fmt(z.A)} m², &nbsp; Iₑ = ${fmt(z.I)} m⁴, &nbsp; EIₑ/L³ = ${fmt(z.q)}</div>
+<p><b>Coefficient matrix before multiplying by EI/L³</b></p><div class="scroll">${matrix(z.B,labs)}</div>
+<p><b>Element stiffness matrix [k]<sup>(${z.e})</sup> (N/m)</b></p><div class="scroll">${matrix(z.k,labs)}</div>
+<p class="small">DOF mapping: {v${z.i}, θ${z.i}, v${z.j}, θ${z.j}} → {${2*z.i-1}, ${2*z.i}, ${2*z.j-1}, ${2*z.j}}</p>`;area.appendChild(d)});
+let nd=2*nn,K=Array.from({length:nd},()=>Array(nd).fill(0));es.forEach(z=>{let mp=[2*(z.i-1),2*(z.i-1)+1,2*(z.j-1),2*(z.j-1)+1];for(let r=0;r<4;r++)for(let c=0;c<4;c++)K[mp[r]][mp[c]]+=z.k[r][c]});
+let labs=[];for(let n=1;n<=nn;n++){labs.push(`v${n}`);labs.push(`θ${n}`)}$("global").innerHTML=matrix(K,labs);
+window.BEAM={ns,es,K,labs};$("teachButtons").innerHTML="";es.forEach(z=>{let b=document.createElement("button");b.type="button";b.textContent=`Element ${z.e} → 7.${z.e}`;b.addEventListener("click",()=>{selectEl(z.e);let t=$("sec7-"+z.e);if(t){location.hash="sec7-"+z.e;t.scrollIntoView()}});$("teachButtons").appendChild(b)});
+$("results").classList.remove("hidden");$("results").scrollIntoView();
+}catch(e){$("err").textContent=e.message||String(e);$("results").classList.add("hidden")}}
+function example(){$("E").value=200e9;$("nn").value=3;$("ne").value=2;nodes();elems();let nr=$("nodeRows").querySelectorAll(".x");[0,4,7].forEach((v,i)=>nr[i].value=v);let er=$("elemRows").querySelectorAll("tr"),q=[[1,2],[2,3]];q.forEach((v,i)=>{er[i].querySelector(".ni").value=v[0];er[i].querySelector(".nj").value=v[1]});calc()}
+$("nn").addEventListener("change",nodes);$("ne").addEventListener("change",elems);$("calc").addEventListener("click",calc);$("example").addEventListener("click",example);nodes();elems();
+})();
+</script>
+<a class="fem-bottom-home" href="index.html">⌂ FEM Home</a>
+<div class="fem-module-nav"><a href="truss2d.html">← 2D Truss</a><a href="frame2d.html">2D Frame →</a></div><a class="fem-top" href="#" aria-label="Back to top">↑</a><script>(function(){const tabs=document.querySelectorAll('.lesson-tab'),panels=document.querySelectorAll('.lesson-panel'),calc=document.getElementById('calculator-workspace');tabs.forEach(b=>b.addEventListener('click',()=>{tabs.forEach(x=>x.classList.remove('active'));panels.forEach(x=>x.classList.remove('active'));b.classList.add('active');const p=document.getElementById('panel-'+b.dataset.panel);if(p)p.classList.add('active');if(calc)calc.style.display=b.dataset.panel==='calculator'?'block':'none';if(b.dataset.panel==='calculator')setTimeout(()=>window.dispatchEvent(new Event('resize')),50);}));})();</script>
+</body></html>

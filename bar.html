@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>1D Bar FEM Learning Module</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;background:#f4f6f9;color:#182235}header{background:#17365d;color:#fff;padding:20px 28px}
+main{max-width:1450px;margin:auto;padding:20px}.card{background:#fff;border:1px solid #d7dde6;border-radius:10px;padding:18px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{display:block;font-weight:bold;font-size:13px;margin-bottom:5px}
+input{width:100%;box-sizing:border-box;padding:8px;border:1px solid #b8c2d0;border-radius:6px}
+button{padding:10px 16px;border:0;border-radius:7px;background:#1f5fae;color:#fff;font-weight:bold;cursor:pointer;margin:4px}button.alt{background:#667085}
+table{border-collapse:collapse;max-width:100%}th,td{border:1px solid #ccd3dd;padding:7px 9px;text-align:center;white-space:nowrap}th{background:#eef2f7}
+.scroll{overflow:auto}.error{color:#b42318;font-weight:bold;margin-top:10px}.eq{text-align:center;font-family:"Times New Roman",serif;font-size:20px;margin:14px;line-height:1.6}
+.small{font-size:13px;color:#5d6878}.hidden{display:none}.matrix td{min-width:92px}.dof{font-weight:bold;background:#f8fafc}
+.nonzero{background:#fff2a8;font-weight:bold}.assemblyHit{background:#ffd966!important;font-weight:bold;box-shadow:inset 0 0 0 2px #c08a00}
+.selectedCard{outline:4px solid #ffd966}.elementSection{scroll-margin-top:16px}#barCanvas{width:100%;height:330px;border:1px solid #ccd3dd;border-radius:8px;background:#fff}
+.teachbar{display:flex;flex-wrap:wrap;gap:6px}.mapbox{background:#eef4fb;border-left:5px solid #17365d;padding:12px;margin:10px 0}
+.note{background:#fff8e6;border-left:5px solid #d99a00;padding:11px;margin:10px 0}
+@media(max-width:800px){.grid{grid-template-columns:1fr 1fr}}@media(max-width:520px){.grid{grid-template-columns:1fr}}
+
+.fem-course-header{display:flex;align-items:center;gap:22px}.fem-course-logo{width:170px;height:96px;object-fit:contain;background:#fff;border-radius:8px;padding:5px;box-sizing:border-box}.fem-course-text{min-width:0}.fem-course-kicker{font-size:15px;font-weight:700;letter-spacing:.04em;color:#dce7f5;margin-bottom:4px}.fem-course-header h1{margin:0 0 5px}.fem-course-subtitle{color:#dce7f5}.fem-site-brand{font-weight:700;margin-right:10px;white-space:nowrap}@media(max-width:620px){.fem-course-header{align-items:flex-start;gap:12px}.fem-course-logo{width:115px;height:68px}.fem-course-kicker{font-size:12px}.fem-course-header h1{font-size:24px}}
+.fem-affiliation{font-size:14px;margin-top:5px;color:#dce7f5}.fem-author{font-size:14px;font-weight:700;margin-top:3px;color:#fff}
+/* Proper mathematical matrix notation */
+.matrix-eq{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:10px 0;font:21px "Times New Roman",serif}
+.math-matrix{position:relative;display:inline-block;padding:2px 10px;vertical-align:middle}
+.math-matrix:before,.math-matrix:after{content:"";position:absolute;top:0;bottom:0;width:7px;border-top:2px solid currentColor;border-bottom:2px solid currentColor}
+.math-matrix:before{left:0;border-left:2px solid currentColor}.math-matrix:after{right:0;border-right:2px solid currentColor}
+.math-matrix table{border-collapse:collapse;margin:0!important;width:auto!important;background:transparent!important;box-shadow:none!important}
+.math-matrix td{border:0!important;padding:2px 9px!important;text-align:center!important;min-width:auto!important;background:transparent!important;font:inherit!important}.math-frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05}.math-frac .num{border-bottom:1.6px solid currentColor;padding:0 5px 3px}.math-frac .den{padding:3px 5px 0}.math-vector table td{padding:1px 7px!important}.display-eq{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0;font:21px "Times New Roman",serif}
+</style>
+<style id="immersive-ui">
+:root{--navy:#0b2342;--blue:#17365d;--accent:#2f75b5;--ink:#182235;--muted:#667085;--paper:#f4f7fb;--line:#d7e0eb;--gold:#f2b134}
+html{scroll-behavior:smooth}body{background:radial-gradient(circle at 15% 0,#edf5ff 0,transparent 30%),#f4f6f9}
+.fem-site-nav{backdrop-filter:blur(10px);background:rgba(11,35,66,.96)!important;border-bottom:1px solid rgba(255,255,255,.12)}
+.fem-site-nav a{transition:.2s ease}.fem-site-nav a:hover{transform:translateY(-1px)}
+.fem-quick-select{margin-left:auto;background:#fff;color:#17365d;border:0;border-radius:7px;padding:8px 10px;font-weight:700;max-width:180px}
+header{background:linear-gradient(125deg,#0b2342 0%,#17365d 58%,#2f75b5 100%)!important;position:relative;overflow:hidden}
+header:after{content:"";position:absolute;width:360px;height:360px;border:1px solid rgba(255,255,255,.12);border-radius:50%;right:-90px;top:-210px;box-shadow:0 0 0 45px rgba(255,255,255,.035),0 0 0 90px rgba(255,255,255,.025)}
+.fem-course-header{position:relative;z-index:1}.fem-course-logo{box-shadow:0 10px 28px rgba(0,0,0,.2)}
+.fem-course-kicker{color:#bcd9f7!important}.fem-affiliation{line-height:1.45}.fem-author{margin-top:7px!important}
+.card,.module-card{box-shadow:0 5px 18px rgba(15,39,71,.06)!important;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}.card:hover{border-color:#b9cce1}.module-card:hover{transform:translateY(-5px)!important;box-shadow:0 14px 30px rgba(15,39,71,.13)!important}
+.module-card span{display:inline-flex;align-items:center;gap:5px}.module-card span:after{content:"›";font-size:20px;line-height:1}.module-card span{font-size:0}.module-card span:before{content:"Open module";font-size:14px}
+.fem-pic{transition:transform .25s ease}.module-card:hover .fem-pic{transform:scale(1.02)}
+button{transition:transform .15s ease,box-shadow .15s ease}button:hover{transform:translateY(-1px);box-shadow:0 5px 12px rgba(31,95,174,.22)}
+.fem-context{max-width:1450px;margin:14px auto 0;padding:0 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#667085;font:600 13px Arial,sans-serif}.fem-context a{color:#1f5fae;text-decoration:none}.fem-context strong{color:#17365d}
+.fem-module-nav{max-width:1450px;margin:8px auto 34px;padding:0 20px;display:flex;justify-content:space-between;gap:12px}.fem-module-nav a{flex:1;max-width:320px;border:1px solid #cbd8e7;background:#fff;color:#17365d;text-decoration:none;border-radius:10px;padding:12px 15px;font:700 14px Arial,sans-serif;box-shadow:0 3px 10px rgba(15,39,71,.05)}.fem-module-nav a:last-child{text-align:right}.fem-module-nav a:hover{border-color:#6f9bc8;box-shadow:0 7px 18px rgba(15,39,71,.1)}
+.fem-top{position:fixed;right:20px;bottom:20px;width:42px;height:42px;border-radius:50%;background:#17365d;color:#fff;text-decoration:none;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.22);z-index:90;font:bold 20px Arial}
+.home-badges{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:18px auto 30px}.home-badge{background:#fff;border:1px solid #d7e0eb;border-radius:999px;padding:8px 13px;color:#17365d;font-weight:700;font-size:13px;box-shadow:0 3px 10px rgba(15,39,71,.05)}
+@media(max-width:800px){.fem-quick-select{width:100%;max-width:none;margin-left:0}.fem-context{align-items:flex-start;flex-direction:column}.fem-module-nav{flex-direction:column}.fem-module-nav a{max-width:none}.fem-module-nav a:last-child{text-align:left}}
+</style>
+<style id="learning-experience-ui">
+.learning-shell{max-width:1450px;margin:18px auto 0;padding:0 20px}.learning-intro{background:linear-gradient(135deg,#ffffff,#edf5ff);border:1px solid #cdddec;border-radius:14px;padding:20px;box-shadow:0 8px 24px rgba(15,39,71,.08)}
+.learning-intro h2{margin:0 0 8px;color:#17365d}.learning-path{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.learning-step{background:#fff;border:1px solid #cbd8e7;border-radius:999px;padding:7px 11px;font-size:13px;font-weight:700;color:#17365d}
+.lesson-tabs{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 12px}.lesson-tab{background:#e9f0f8;color:#17365d;border:1px solid #c8d6e6;box-shadow:none}.lesson-tab.active{background:#17365d;color:#fff}.lesson-panel{display:none}.lesson-panel.active{display:block}.lesson-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.concept-card{background:#fff;border:1px solid #d7e0eb;border-radius:12px;padding:16px;box-shadow:0 4px 14px rgba(15,39,71,.05)}.concept-card h3{margin-top:0;color:#17365d}.concept-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#17365d;color:#fff;font-weight:800;margin-bottom:10px}.formula-box{background:#f8fbff;border:1px solid #cbdced;border-radius:10px;padding:15px;text-align:center;font:21px 'Times New Roman',serif;margin:10px 0}.pdf-frame{width:100%;height:720px;border:1px solid #cbd8e7;border-radius:10px;background:#fff}.example-flow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.flow-step{background:#fff;border:1px solid #d7e0eb;border-radius:10px;padding:14px}.flow-step b{color:#17365d}.practice-box{background:#fff;border:1px solid #d7e0eb;border-radius:12px;padding:18px}.practice-diagram{display:flex;align-items:center;gap:0;overflow:auto;padding:28px 12px}.pnode{min-width:34px;height:34px;border:3px solid #17365d;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#fff;font-weight:800;z-index:2}.pbar{min-width:120px;height:12px;background:linear-gradient(90deg,#6fa8dc,#17365d);position:relative}.pbar span{position:absolute;top:-28px;left:50%;transform:translateX(-50%);font-size:12px;white-space:nowrap;color:#344054}.practice-actions{display:flex;gap:8px;flex-wrap:wrap}.reveal{display:none;background:#eef7ee;border-left:5px solid #3a8b4e;padding:12px;margin-top:12px}.mini-callout{background:#fff8e6;border-left:5px solid #f2b134;padding:12px;margin:12px 0}.lecture-link{display:inline-block;margin-top:10px;color:#1f5fae;font-weight:700;text-decoration:none}
+@media(max-width:900px){.lesson-grid{grid-template-columns:1fr 1fr}.example-flow{grid-template-columns:1fr 1fr}.pdf-frame{height:560px}}@media(max-width:600px){.lesson-grid,.example-flow{grid-template-columns:1fr}.pdf-frame{height:480px}.learning-shell{padding:0 12px}}
+</style>
+<script src="course-access.js"></script></head>
+<body>
+<style id="fem-site-nav-style">
+.fem-site-nav{background:#0f2747;color:#fff;padding:10px 18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:sticky;top:0;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,.16);font-family:Arial,sans-serif}
+.fem-site-brand{font-weight:700;margin-right:10px;white-space:nowrap}.fem-site-nav a{color:#fff;text-decoration:none;padding:8px 11px;border-radius:6px;font-size:14px;font-weight:600}.fem-site-nav a:hover{background:#285582}.fem-site-nav a.active{background:#fff;color:#17365d}.fem-bottom-home{display:block;width:max-content;margin:24px auto 36px;padding:10px 18px;background:#17365d;color:#fff!important;text-decoration:none;border-radius:7px;font:bold 14px Arial,sans-serif}
+@media(max-width:700px){.fem-site-nav{position:relative}.fem-site-brand{width:100%}.fem-site-nav a{font-size:13px;padding:7px 9px}}
+.fem-affiliation{font-size:14px;margin-top:5px;color:#dce7f5}.fem-author{font-size:14px;font-weight:700;margin-top:3px;color:#fff}</style><nav class="fem-site-nav"><span class="fem-site-brand">Interactive FEM Learning Suite</span><a href="index.html">Home</a><a href="bar.html" class="active">1D Bar</a><a href="truss2d.html">2D Truss</a><a href="beam2d.html">2D Beam</a><a href="frame2d.html">2D Frame</a><a href="cst.html">CST</a><a href="truss3d.html">3D Truss</a><a href="beam3d.html">3D Beam</a><select class="fem-quick-select" aria-label="Jump to FEM module" onchange="if(this.value) location.href=this.value"><option value="index.html">Home</option><option value="bar.html" selected>1D Bar</option><option value="truss2d.html">2D Truss</option><option value="beam2d.html">2D Beam</option><option value="frame2d.html">2D Frame</option><option value="cst.html">CST</option><option value="truss3d.html">3D Truss</option><option value="beam3d.html">3D Beam</option></select></nav>
+<header><div class="fem-course-header"><img src="aerospace-logo.jpg" class="fem-course-logo" alt="School of Aerospace Engineering"><div class="fem-course-text"><div class="fem-course-kicker">ESA 321 – FINITE ELEMENT METHOD</div><h1>1D Bar FEM Learning Module</h1><div class="fem-course-subtitle">Axial bar • 1 DOF per node • element stiffness • DOF mapping • global assembly</div><div class="fem-affiliation">School of Aerospace Engineering, Universiti Sains Malaysia, Tuanku Syed Sirajuddin Engineering Campus</div><div class="fem-author">Dr. Norizham Abdul Razak</div></div></div></header><div class="fem-context"><div><a href="index.html">ESA 321</a> &nbsp;›&nbsp; <strong>1D Bar FEM Learning Module</strong></div><div>Use the module selector above to jump between element types.</div></div>
+
+<section class="learning-shell" id="learn">
+  <div class="learning-intro">
+    <h2>Learn the 1D Bar Element</h2>
+    <p>This prototype connects the ESA 321 lecture material directly to the interactive FEM model. Move from the element assumptions to stiffness formulation, assembly, worked examples and practice.</p>
+    <div class="learning-path"><span class="learning-step">1 · Properties</span><span class="learning-step">2 · DOFs</span><span class="learning-step">3 · Element stiffness</span><span class="learning-step">4 · Assembly</span><span class="learning-step">5 · Boundary conditions</span><span class="learning-step">6 · Solve & interpret</span></div>
+  </div>
+  <div class="lesson-tabs" role="tablist">
+    <button class="lesson-tab active" data-panel="concepts">Concepts</button>
+    <button class="lesson-tab" data-panel="notes">Lecture Notes</button>
+    <button class="lesson-tab" data-panel="worked">Worked Example</button>
+    <button class="lesson-tab" data-panel="practice">Practice</button>
+    <button class="lesson-tab" data-panel="calculator">Interactive FEM</button>
+  </div>
+  <div class="lesson-panel active" id="panel-concepts">
+    <div class="lesson-grid">
+      <div class="concept-card"><div class="concept-num">1</div><h3>Element behaviour</h3><p>A bar deforms only in the axial direction. It carries axial load in tension or compression and does not sustain shear force or bending moment.</p></div>
+      <div class="concept-card"><div class="concept-num">2</div><h3>Nodal DOFs</h3><p>Each node has one axial displacement degree of freedom. For element <i>e</i>, the displacement vector is:</p><div class="formula-box display-eq"><span>{d}<sup>(e)</sup> =</span><span class="math-matrix math-vector"><table><tr><td>u<sub>i</sub></td></tr><tr><td>u<sub>j</sub></td></tr></table></span></div></div>
+      <div class="concept-card"><div class="concept-num">3</div><h3>Axial stiffness</h3><p>For a uniform prismatic bar with area <i>A</i>, modulus <i>E</i> and length <i>L</i>:</p><div class="formula-box display-eq"><span>k =</span><span class="math-frac"><span class="num"><i>AE</i></span><span class="den"><i>L</i></span></span></div></div>
+      <div class="concept-card"><div class="concept-num">4</div><h3>Element matrix</h3><div class="formula-box matrix-eq"><span>[k]<sup>(e)</sup> =</span><span class="math-frac"><span class="num"><i>AE</i></span><span class="den"><i>L</i></span></span><span class="math-matrix"><table><tr><td>1</td><td>−1</td></tr><tr><td>−1</td><td>1</td></tr></table></span></div><p>The two rows and columns correspond to the two nodal axial DOFs.</p></div>
+      <div class="concept-card"><div class="concept-num">5</div><h3>Global assembly</h3><p>Map each element's two DOFs into the matching rows and columns of the global stiffness matrix. Shared nodes accumulate contributions from adjacent elements.</p></div>
+      <div class="concept-card"><div class="concept-num">6</div><h3>Boundary conditions</h3><p>Prescribed displacements are applied before solving the reduced system for unknown nodal displacements. Reactions follow from the complete global equation.</p></div>
+    </div>
+    <div class="mini-callout"><b>Learning objective:</b> apply FEM using the bar element to solve structural problems.</div>
+  </div>
+  <div class="lesson-panel" id="panel-notes">
+    <div class="card"><h2>ESA 321 Lecture Notes · Bar Element</h2><p class="small">Your original 13-page lecture note is embedded here so students can move between the notes and the interactive module without leaving the page.</p><iframe class="pdf-frame" src="ESA321_Bar_Element_Lecture_Notes.pdf#view=FitH" title="ESA 321 Bar Element Lecture Notes"></iframe><a class="lecture-link" href="ESA321_Bar_Element_Lecture_Notes.pdf" target="_blank">Open lecture notes in a new tab ↗</a></div>
+  </div>
+  <div class="lesson-panel" id="panel-worked">
+    <div class="card">
+      <h2>Worked Example · Two Bar Elements</h2>
+      <p>Determine the displacement at node 2 for the two-element axial bar system. Both elements have length <i>L</i>. Element 1 has area 2<i>A</i>, Element 2 has area <i>A</i>, Young's modulus is <i>E</i>, nodes 1 and 3 are restrained, and load <i>P</i> acts at node 2.</p>
+      <div style="margin:22px 0 18px;padding:18px;border:1px solid #cbd5e1;border-radius:14px;background:#f8fafc;overflow-x:auto">
+        <svg viewBox="0 0 900 250" role="img" aria-label="Two-element axial bar worked example: node 1 fixed, element 1 area 2A and length L, load P at node 2, element 2 area A and length L, node 3 fixed" style="display:block;width:100%;min-width:650px;height:auto">
+          <defs><marker id="arrowP" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#b91c1c"/></marker></defs>
+          <!-- supports -->
+          <line x1="80" y1="65" x2="80" y2="185" stroke="#334155" stroke-width="6"/>
+          <g stroke="#64748b" stroke-width="2"><line x1="45" y1="78" x2="80" y2="60"/><line x1="45" y1="103" x2="80" y2="85"/><line x1="45" y1="128" x2="80" y2="110"/><line x1="45" y1="153" x2="80" y2="135"/><line x1="45" y1="178" x2="80" y2="160"/></g>
+          <line x1="820" y1="65" x2="820" y2="185" stroke="#334155" stroke-width="6"/>
+          <g stroke="#64748b" stroke-width="2"><line x1="820" y1="60" x2="855" y2="78"/><line x1="820" y1="85" x2="855" y2="103"/><line x1="820" y1="110" x2="855" y2="128"/><line x1="820" y1="135" x2="855" y2="153"/><line x1="820" y1="160" x2="855" y2="178"/></g>
+          <!-- bars -->
+          <line x1="80" y1="125" x2="450" y2="125" stroke="#2563eb" stroke-width="18" stroke-linecap="round"/>
+          <line x1="450" y1="125" x2="820" y2="125" stroke="#0f766e" stroke-width="11" stroke-linecap="round"/>
+          <!-- nodes -->
+          <g fill="#fff" stroke="#0f172a" stroke-width="3"><circle cx="80" cy="125" r="12"/><circle cx="450" cy="125" r="12"/><circle cx="820" cy="125" r="12"/></g>
+          <!-- load -->
+          <line x1="450" y1="82" x2="555" y2="82" stroke="#b91c1c" stroke-width="5" marker-end="url(#arrowP)"/>
+          <text x="500" y="65" text-anchor="middle" font-size="23" font-weight="700" fill="#b91c1c">P</text>
+          <!-- labels -->
+          <g font-family="Arial, sans-serif" fill="#0f172a" text-anchor="middle"><text x="80" y="215" font-size="20" font-weight="700">Node 1</text><text x="450" y="215" font-size="20" font-weight="700">Node 2</text><text x="820" y="215" font-size="20" font-weight="700">Node 3</text><text x="265" y="105" font-size="19" font-weight="700">Element 1</text><text x="265" y="155" font-size="18">A₁ = 2A, L₁ = L</text><text x="635" y="105" font-size="19" font-weight="700">Element 2</text><text x="635" y="155" font-size="18">A₂ = A, L₂ = L</text><text x="80" y="242" font-size="16">u₁ = 0</text><text x="450" y="242" font-size="16">u₂ = ?</text><text x="820" y="242" font-size="16">u₃ = 0</text></g>
+        </svg>
+      </div>
+      <div class="mini-callout"><b>Sign convention:</b> positive displacement and force act in the +x direction. The reaction and element-force results below are derived from the assembled FEM equations after obtaining the displacement requested in the lecture example.</div>
+    </div>
+
+    <div class="card"><h2>Step 1 · Identify Nodes, Elements and Degrees of Freedom</h2>
+      <p>There are three nodes and one axial displacement degree of freedom at each node.</p>
+      <div class="formula-box display-eq"><span>{u} =</span><span class="math-matrix math-vector"><table><tr><td>u<sub>1</sub></td></tr><tr><td>u<sub>2</sub></td></tr><tr><td>u<sub>3</sub></td></tr></table></span></div>
+      <p>Element 1 connects nodes 1–2 and Element 2 connects nodes 2–3.</p>
+    </div>
+
+    <div class="card"><h2>Step 2 · Write the General Bar Element Stiffness Matrix</h2>
+      <p>For a two-node axial bar element,</p>
+      <div class="formula-box matrix-eq"><span>[k]<sup>(e)</sup> =</span><span class="math-frac"><span class="num"><i>A</i><sub>e</sub><i>E</i></span><span class="den"><i>L</i><sub>e</sub></span></span><span class="math-matrix"><table><tr><td>1</td><td>−1</td></tr><tr><td>−1</td><td>1</td></tr></table></span></div>
+    </div>
+
+    <div class="card"><h2>Step 3 · Form the Element 1 Stiffness Matrix</h2>
+      <p>For Element 1, <i>A</i><sub>1</sub> = 2<i>A</i> and <i>L</i><sub>1</sub> = <i>L</i>.</p>
+      <div class="formula-box matrix-eq"><span>[k]<sup>(1)</sup> =</span><span class="math-frac"><span class="num">2<i>AE</i></span><span class="den"><i>L</i></span></span><span class="math-matrix"><table><tr><td>1</td><td>−1</td></tr><tr><td>−1</td><td>1</td></tr></table></span></div>
+      <div class="formula-box matrix-eq"><span>[k]<sup>(1)</sup> =</span><span class="math-frac"><span class="num"><i>EA</i></span><span class="den"><i>L</i></span></span><span class="math-matrix"><table><tr><td>2</td><td>−2</td></tr><tr><td>−2</td><td>2</td></tr></table></span></div>
+      <p>Element 1 maps to global DOFs (1, 2).</p>
+    </div>
+
+    <div class="card"><h2>Step 4 · Form the Element 2 Stiffness Matrix</h2>
+      <p>For Element 2, <i>A</i><sub>2</sub> = <i>A</i> and <i>L</i><sub>2</sub> = <i>L</i>.</p>
+      <div class="formula-box matrix-eq"><span>[k]<sup>(2)</sup> =</span><span class="math-frac"><span class="num"><i>EA</i></span><span class="den"><i>L</i></span></span><span class="math-matrix"><table><tr><td>1</td><td>−1</td></tr><tr><td>−1</td><td>1</td></tr></table></span></div>
+      <p>Element 2 maps to global DOFs (2, 3).</p>
+    </div>
+
+    <div class="card"><h2>Step 5 · Assemble the Global Stiffness Matrix</h2>
+      <p>Place each element matrix into the global rows and columns associated with its nodal DOFs. Contributions at the shared node 2 are added.</p>
+      <div class="formula-box matrix-eq"><span>[K] =</span><span class="math-frac"><span class="num"><i>EA</i></span><span class="den"><i>L</i></span></span><span class="math-matrix"><table><tr><td>2</td><td>−2</td><td>0</td></tr><tr><td>−2</td><td>3</td><td>−1</td></tr><tr><td>0</td><td>−1</td><td>1</td></tr></table></span></div>
+    </div>
+
+    <div class="card"><h2>Step 6 · Write the Global Equilibrium Equation</h2>
+      <div class="formula-box matrix-eq"><span>[K]</span><span class="math-matrix math-vector"><table><tr><td>u<sub>1</sub></td></tr><tr><td>u<sub>2</sub></td></tr><tr><td>u<sub>3</sub></td></tr></table></span><span>=</span><span class="math-matrix math-vector"><table><tr><td>F<sub>1</sub></td></tr><tr><td>P</td></tr><tr><td>F<sub>3</sub></td></tr></table></span></div>
+      <p>At the restrained nodes, the nodal forces <i>F</i><sub>1</sub> and <i>F</i><sub>3</sub> are the unknown support reactions.</p>
+    </div>
+
+    <div class="card"><h2>Step 7 · Apply the Boundary Conditions</h2>
+      <p>Nodes 1 and 3 are fixed in the axial direction.</p>
+      <div class="formula-box display-eq"><span>u<sub>1</sub> = 0</span><span>,</span><span>u<sub>3</sub> = 0</span></div>
+      <div class="formula-box matrix-eq"><span>{u} =</span><span class="math-matrix math-vector"><table><tr><td>0</td></tr><tr><td>u<sub>2</sub></td></tr><tr><td>0</td></tr></table></span></div>
+    </div>
+
+    <div class="card"><h2>Step 8 · Form the Reduced Equation</h2>
+      <p>Using the second row of the global equilibrium equation,</p>
+      <div class="formula-box display-eq"><span class="math-frac"><span class="num"><i>EA</i></span><span class="den"><i>L</i></span></span><span>(−2u<sub>1</sub> + 3u<sub>2</sub> − u<sub>3</sub>) = P</span></div>
+      <p>Substitute the prescribed displacements.</p>
+      <div class="formula-box display-eq"><span class="math-frac"><span class="num"><i>EA</i></span><span class="den"><i>L</i></span></span><span>(3u<sub>2</sub>) = P</span></div>
+    </div>
+
+    <div class="card"><h2>Step 9 · Solve for the Unknown Displacement</h2>
+      <div class="formula-box display-eq"><span>3</span><span class="math-frac"><span class="num"><i>EA</i></span><span class="den"><i>L</i></span></span><span>u<sub>2</sub> = P</span></div>
+      <div class="formula-box display-eq"><span>u<sub>2</sub> =</span><span class="math-frac"><span class="num"><i>PL</i></span><span class="den">3<i>EA</i></span></span></div>
+      <div class="mini-callout"><b>Displacement result:</b> node 2 moves in the +x direction by <span style="font-family:'Times New Roman',serif;font-size:1.15em">PL/(3EA)</span>.</div>
+    </div>
+
+    <div class="card"><h2>Step 10 · Recover the Complete Displacement Vector</h2>
+      <div class="formula-box matrix-eq"><span>{u} =</span><span class="math-matrix math-vector"><table><tr><td>0</td></tr><tr><td><span class="math-frac"><span class="num"><i>PL</i></span><span class="den">3<i>EA</i></span></span></td></tr><tr><td>0</td></tr></table></span></div>
+    </div>
+
+    <div class="card"><h2>Step 11 · Calculate the Support Reactions</h2>
+      <p>Substitute the complete displacement vector back into the original global equation.</p>
+      <div class="formula-box matrix-eq"><span>{F} =</span><span class="math-frac"><span class="num"><i>EA</i></span><span class="den"><i>L</i></span></span><span class="math-matrix"><table><tr><td>2</td><td>−2</td><td>0</td></tr><tr><td>−2</td><td>3</td><td>−1</td></tr><tr><td>0</td><td>−1</td><td>1</td></tr></table></span><span class="math-matrix math-vector"><table><tr><td>0</td></tr><tr><td><span class="math-frac"><span class="num"><i>PL</i></span><span class="den">3<i>EA</i></span></span></td></tr><tr><td>0</td></tr></table></span></div>
+      <div class="formula-box matrix-eq"><span>{F} =</span><span class="math-matrix math-vector"><table><tr><td>−2P/3</td></tr><tr><td>P</td></tr><tr><td>−P/3</td></tr></table></span></div>
+      <div class="display-eq"><span>R<sub>1</sub> = −</span><span class="math-frac"><span class="num">2<i>P</i></span><span class="den">3</span></span><span>,</span><span>R<sub>3</sub> = −</span><span class="math-frac"><span class="num"><i>P</i></span><span class="den">3</span></span></div>
+      <p>The negative signs indicate that both reactions act opposite to the assumed +x direction. Their magnitudes sum to <i>P</i>, satisfying global equilibrium.</p>
+    </div>
+
+    <div class="card"><h2>Step 12 · Calculate Element Axial Forces</h2>
+      <p>For Element 1, the extension is u<sub>2</sub> − u<sub>1</sub>.</p>
+      <div class="formula-box display-eq"><span>N<sub>1</sub> =</span><span class="math-frac"><span class="num">2<i>EA</i></span><span class="den"><i>L</i></span></span><span>(u<sub>2</sub> − u<sub>1</sub>) =</span><span class="math-frac"><span class="num">2<i>P</i></span><span class="den">3</span></span></div>
+      <p>Element 1 is therefore in tension.</p>
+      <p>For Element 2,</p>
+      <div class="formula-box display-eq"><span>N<sub>2</sub> =</span><span class="math-frac"><span class="num"><i>EA</i></span><span class="den"><i>L</i></span></span><span>(u<sub>3</sub> − u<sub>2</sub>) = −</span><span class="math-frac"><span class="num"><i>P</i></span><span class="den">3</span></span></div>
+      <p>With tension taken as positive, Element 2 is in compression.</p>
+    </div>
+
+    <div class="card"><h2>Step 13 · Final Results</h2>
+      <div class="lesson-grid">
+        <div class="concept-card"><h3>Node 2 displacement</h3><div class="display-eq"><span>u<sub>2</sub> =</span><span class="math-frac"><span class="num"><i>PL</i></span><span class="den">3<i>EA</i></span></span></div></div>
+        <div class="concept-card"><h3>Support reactions</h3><div class="display-eq"><span>R<sub>1</sub> = −</span><span class="math-frac"><span class="num">2<i>P</i></span><span class="den">3</span></span></div><div class="display-eq"><span>R<sub>3</sub> = −</span><span class="math-frac"><span class="num"><i>P</i></span><span class="den">3</span></span></div></div>
+        <div class="concept-card"><h3>Element axial forces</h3><div class="display-eq"><span>N<sub>1</sub> =</span><span class="math-frac"><span class="num">2<i>P</i></span><span class="den">3</span></span><span>(tension)</span></div><div class="display-eq"><span>N<sub>2</sub> = −</span><span class="math-frac"><span class="num"><i>P</i></span><span class="den">3</span></span><span>(compression)</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="lesson-panel" id="panel-practice">
+    <div class="practice-box"><h2>Practice Question · Four-Bar Axial System</h2><p>Both ends are fixed. The four elements have lengths 500, 400, 600 and 500 mm; areas 400, 300, 500 and 400 mm²; and <i>E</i> = 200 GPa for all elements. Loads are 20 kN at node 2 in +x and 30 kN at node 4 in −x.</p>
+      <div class="practice-diagram"><div class="pnode">1</div><div class="pbar"><span>L=500 mm · A=400</span></div><div class="pnode">2</div><div class="pbar"><span>L=400 mm · A=300</span></div><div class="pnode">3</div><div class="pbar"><span>L=600 mm · A=500</span></div><div class="pnode">4</div><div class="pbar"><span>L=500 mm · A=400</span></div><div class="pnode">5</div></div>
+      <p><b>Determine:</b> the element stiffness matrices, global stiffness matrix, displacements u₂, u₃ and u₄, axial force and stress in each element, and reactions at nodes 1 and 5.</p>
+      <div class="practice-actions"><button type="button" onclick="document.getElementById('hint1').style.display='block'">Hint 1</button><button type="button" onclick="document.getElementById('hint2').style.display='block'">Hint 2</button></div>
+      <div class="reveal" id="hint1"><b>Hint 1:</b> Convert all quantities to one consistent unit system, then calculate AE/L for each element.</div><div class="reveal" id="hint2"><b>Hint 2:</b> Assemble a 5×5 global stiffness matrix using element mappings (1,2), (2,3), (3,4), and (4,5), then impose u₁ = u₅ = 0.</div>
+    </div>
+  </div>
+  <div class="lesson-panel" id="panel-calculator"><div class="card"><h2>Interactive FEM Workspace</h2><p>Define the bar model, inspect the element stiffness matrices, assemble the global stiffness matrix, and explore the DOF mapping below.</p></div></div>
+</section>
+
+<main id="calculator-workspace" style="display:none">
+<div class="card"><h2>1. Bar Model</h2>
+<p class="small">A 2-node bar element carries axial load only. Each node has one axial displacement DOF, u.</p>
+<div class="grid">
+<div><label>Young's modulus, E (N/m²)</label><input id="E" type="number" step="any" value="200000000000"></div>
+
+<div><label>Number of nodes</label><input id="nn" type="number" min="2" max="5" value="4"></div>
+<div><label>Number of elements</label><input id="ne" type="number" min="1" max="4" value="3"></div>
+</div>
+<div class="note"><b>Bar element properties:</b> deformation is along the axial direction; loads act at the nodes; the element transmits axial force only and does not resist shear or bending moment.</div>
+</div>
+
+<div class="card"><h2>2. Node Coordinates</h2>
+<p class="small">Enter each node position along the global x-axis.</p>
+<div class="scroll"><table><thead><tr><th>Node</th><th>x (m)</th></tr></thead><tbody id="nodeRows"></tbody></table></div></div>
+
+<div class="card"><h2>3. Element Connectivity</h2><p class="small"><b>Element-specific section property:</b> enter a separate cross-sectional area Aₑ for each element.</p>
+<div class="scroll"><table><thead><tr><th>Element</th><th>Node i</th><th>Node j</th><th>Area Aₑ (m²)</th></tr></thead><tbody id="elemRows"></tbody></table></div>
+<br><button id="calc">Calculate & Draw</button><button id="example" class="alt">Load Example</button><div id="err" class="error"></div></div>
+
+<div id="results" class="hidden">
+<div class="card"><h2>4. Bar Structure</h2><canvas id="barCanvas" width="1200" height="330"></canvas></div>
+
+<div class="card"><h2>5. Bar Element Formulation</h2>
+<div class="eq display-eq"><span>{d}<sup>(e)</sup> =</span><span class="math-matrix math-vector"><table><tr><td>uᵢ</td></tr><tr><td>uⱼ</td></tr></table></span></div>
+<div class="eq matrix-eq"><span>[k]<sup>(e)</sup> =</span><span class="math-frac"><span class="num"><i>AE</i></span><span class="den"><i>L</i></span></span><span class="math-matrix"><table><tr><td>1</td><td>−1</td></tr><tr><td>−1</td><td>1</td></tr></table></span></div>
+<p class="small">For a 1D bar, the element stiffness matrix is already expressed along the global x-axis, so no coordinate transformation is required.</p></div>
+
+<div class="card"><h2>6. Interactive Assembly Teaching Mode</h2>
+<p class="small">Select an element to highlight its two DOFs and the corresponding 2×2 contribution inside the global stiffness matrix.</p>
+<div id="teachButtons" class="teachbar"></div><div id="teachInfo" class="mapbox">Calculate the model, then select an element.</div></div>
+
+<div id="elementSections"></div>
+
+<div class="card"><h2>8. Assembled Global Stiffness Matrix [K]</h2>
+<p class="small">Global displacement vector:</p><div class="display-eq"><span>{u} =</span><span class="math-matrix math-vector"><table><tr><td>u₁</td></tr><tr><td>u₂</td></tr><tr><td>⋮</td></tr><tr><td>uₙ</td></tr></table></span></div><p class="small">Boundary conditions are not applied.</p>
+<div id="global" class="scroll"></div></div>
+</div>
+</main>
+<script>
+(function(){"use strict";const $=id=>document.getElementById(id);
+function zero(x){return Math.abs(x)<1e-9?0:x}
+function fmt(x){x=zero(x);let a=Math.abs(x);return(a!==0&&(a>=1e6||a<1e-3))?x.toExponential(4):x.toFixed(4)}
+function matrix(M,labs,hit=[]){let H=new Set(hit),s="<table class='matrix'><thead><tr>";labs.forEach((x,i)=>s+=`<th class="dof ${H.has(i)?'assemblyHit':''}">${x}</th>`);s+="<th></th></tr></thead><tbody>";
+M.forEach((r,i)=>{s+="<tr>";r.forEach((v,j)=>s+=`<td class="${Math.abs(v)>1e-9?'nonzero ':''}${H.has(i)&&H.has(j)?'assemblyHit':''}">${fmt(v)}</td>`);s+=`<th class="dof ${H.has(i)?'assemblyHit':''}">${labs[i]}</th></tr>`});return s+"</tbody></table>"}
+function nodes(){let n=Math.max(2,Math.min(5,+$("nn").value||2)),old=[];$("nodeRows").querySelectorAll("input").forEach(q=>old.push(q.value));$("nodeRows").innerHTML="";
+for(let i=0;i<n;i++)$("nodeRows").insertAdjacentHTML("beforeend",`<tr><td><b>${i+1}</b></td><td><input class="x" type="number" step="any" value="${old[i]??i}"></td></tr>`)}
+function elems(){let n=Math.max(1,Math.min(4,+$("ne").value||1)),old=[];$("elemRows").querySelectorAll("tr").forEach(r=>{let q=r.querySelectorAll("input");old.push([q[0].value,q[1].value,q[2]?.value||0.005])});$("elemRows").innerHTML="";
+for(let e=0;e<n;e++){let q=old[e]||[e+1,e+2,0.005];$("elemRows").insertAdjacentHTML("beforeend",`<tr><td><b>${e+1}</b></td><td><input class="ni" type="number" value="${q[0]}"></td><td><input class="nj" type="number" value="${q[1]}"></td><td><input class="ae" type="number" step="any" value="${q[2]}"></td></tr>`)}}
+function draw(ns,es,sel=0){let cv=$("barCanvas"),c=cv.getContext("2d"),W=cv.width,H=cv.height,p=90,y=H/2;c.clearRect(0,0,W,H);let xmin=Math.min(...ns),xmax=Math.max(...ns),dx=xmax-xmin||1,X=x=>p+(x-xmin)*(W-2*p)/dx;
+es.forEach(e=>{c.strokeStyle=e.e===sel?"#f0a000":"#17365d";c.lineWidth=e.e===sel?12:7;c.lineCap="round";c.beginPath();c.moveTo(X(ns[e.i-1]),y);c.lineTo(X(ns[e.j-1]),y);c.stroke();let mx=(X(ns[e.i-1])+X(ns[e.j-1]))/2;c.fillStyle="#b42318";c.font="bold 16px Arial";c.textAlign="center";c.fillText(`Element ${e.e}`,mx,y-30);c.fillStyle="#5d6878";c.font="13px Arial";c.fillText(`L = ${fmt(e.L)} m`,mx,y-10)});
+ns.forEach((x,i)=>{let xx=X(x);c.fillStyle="#fff";c.strokeStyle="#17365d";c.lineWidth=3;c.beginPath();c.arc(xx,y,18,0,2*Math.PI);c.fill();c.stroke();c.fillStyle="#17365d";c.font="bold 16px Arial";c.fillText(i+1,xx,y+5);c.fillStyle="#5d6878";c.font="13px Arial";c.fillText(`x=${fmt(x)}`,xx,y+45)});
+c.strokeStyle="#8b95a5";c.lineWidth=2;c.beginPath();c.moveTo(45,y+90);c.lineTo(125,y+90);c.stroke();c.fillStyle="#5d6878";c.textAlign="left";c.fillText("+x",132,y+95)}
+function selectEl(no){let T=window.BAR,z=T.es.find(e=>e.e===no),mp=[z.i-1,z.j-1],one=mp.map(x=>x+1);
+$("teachInfo").innerHTML=`<b>Element ${z.e}: Node ${z.i} → Node ${z.j}</b><br>Element DOFs: {u${z.i}, u${z.j}}<br>Global DOF numbers: {${one.join(", ")}}<br><br>The 2×2 element matrix is assembled into global rows and columns <b>${one.join(", ")}</b>.`;
+$("global").innerHTML=matrix(T.K,T.labs,mp);document.querySelectorAll(".elementSection").forEach(x=>x.classList.remove("selectedCard"));let q=$("sec7-"+no);if(q)q.classList.add("selectedCard");draw(T.ns,T.es,no)}
+function calc(){try{$("err").textContent="";let E=+$("E").value,nn=+$("nn").value,ne=+$("ne").value;if(!(E>0)||nn<2||nn>5||ne<1||ne>4)throw Error("Check E, node count and element count.");
+let ns=[];$("nodeRows").querySelectorAll("tr").forEach((r,i)=>{if(i<nn){let x=+r.querySelector(".x").value;if(!Number.isFinite(x))throw Error(`Invalid coordinate at node ${i+1}.`);ns.push(x)}});
+let es=[];$("elemRows").querySelectorAll("tr").forEach((r,e)=>{if(e<ne){let i=+r.querySelector(".ni").value,j=+r.querySelector(".nj").value;if(i<1||j<1||i>nn||j>nn||i===j)throw Error(`Invalid connectivity for element ${e+1}.`);let L=Math.abs(ns[j-1]-ns[i-1]);if(!(L>0))throw Error(`Element ${e+1} has zero length.`);let A=+r.querySelector(".ae").value;if(!(A>0))throw Error(`Element ${e+1}: area must be positive.`);let q=E*A/L,k=[[q,-q],[-q,q]];es.push({e:e+1,i,j,L,A,q,k})}});
+draw(ns,es);let box=$("elementSections");box.innerHTML="";
+es.forEach(z=>{let labs=[`u${z.i}`,`u${z.j}`],d=document.createElement("div");d.className="card elementSection";d.id="sec7-"+z.e;d.innerHTML=`<h2>7.${z.e} Element ${z.e}: Node ${z.i} → Node ${z.j}</h2>
+<div class="eq">L = ${fmt(z.L)} m, &nbsp; Aₑ = ${fmt(z.A)} m²</div><div class="eq">AₑE/L = ${fmt(z.q)} N/m</div>
+<p><b>Basic coefficient matrix</b></p><div class="scroll">${matrix([[1,-1],[-1,1]],labs)}</div>
+<p><b>Element stiffness matrix [k]<sup>(${z.e})</sup></b></p><div class="scroll">${matrix(z.k,labs)}</div>
+<p class="small">DOF mapping: {u${z.i}, u${z.j}} → {${z.i}, ${z.j}}</p>`;box.appendChild(d)});
+let K=Array.from({length:nn},()=>Array(nn).fill(0));es.forEach(z=>{let mp=[z.i-1,z.j-1];for(let r=0;r<2;r++)for(let c=0;c<2;c++)K[mp[r]][mp[c]]+=z.k[r][c]});let labs=Array.from({length:nn},(_,i)=>`u${i+1}`);$("global").innerHTML=matrix(K,labs);window.BAR={ns,es,K,labs};
+$("teachButtons").innerHTML="";es.forEach(z=>{let b=document.createElement("button");b.type="button";b.textContent=`Element ${z.e} → 7.${z.e}`;b.addEventListener("click",()=>{selectEl(z.e);let t=$("sec7-"+z.e);if(t){location.hash="sec7-"+z.e;t.scrollIntoView()}});$("teachButtons").appendChild(b)});
+$("results").classList.remove("hidden");$("results").scrollIntoView()}catch(e){$("err").textContent=e.message||String(e);$("results").classList.add("hidden")}}
+function example(){$("E").value=200e9;$("nn").value=4;$("ne").value=3;nodes();elems();let p=[0,2,5,7];$("nodeRows").querySelectorAll(".x").forEach((q,i)=>q.value=p[i]);let e=[[1,2],[2,3],[3,4]];$("elemRows").querySelectorAll("tr").forEach((r,i)=>{r.querySelector(".ni").value=e[i][0];r.querySelector(".nj").value=e[i][1];r.querySelector(".ae").value=[0.005,0.0035,0.006][i]});calc()}
+$("nn").addEventListener("change",nodes);$("ne").addEventListener("change",elems);$("calc").addEventListener("click",calc);$("example").addEventListener("click",example);nodes();elems()})();
+</script><a class="fem-bottom-home" href="index.html">⌂ FEM Home</a>
+<div class="fem-module-nav"><a href="index.html">← Home</a><a href="truss2d.html">2D Truss →</a></div><a class="fem-top" href="#" aria-label="Back to top">↑</a><script id="lesson-tabs-js">document.querySelectorAll('.lesson-tab').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.lesson-tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.lesson-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('panel-'+b.dataset.panel).classList.add('active');var w=document.getElementById('calculator-workspace');w.style.display=b.dataset.panel==='calculator'?'block':'none';if(b.dataset.panel==='calculator'){setTimeout(function(){w.scrollIntoView({behavior:'smooth',block:'start'});},50);}});});</script>
+</body></html>
