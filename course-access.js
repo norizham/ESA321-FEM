@@ -9,7 +9,7 @@ const ESA321_ACCESS = {
   frame2d: true,
   cst: false,
   truss3d: true,
-  beam3d: false
+  beam3d: true
 };
 
 (() => {
