@@ -5,8 +5,8 @@
 const ESA321_ACCESS = {
   bar: true,
   truss2d: true,
-  beam2d: false,
-  frame2d: false,
+  beam2d: true,
+  frame2d: true,
   cst: false,
   truss3d: true,
   beam3d: false
